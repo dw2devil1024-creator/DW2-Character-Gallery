@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 
-/* DW2 · Character Gallery | v1.0.1
+/* DW2 · Character Gallery | v1.0.2
    Scope: TT native character-list panel only.
    Preserve native DOM, delegated click handlers and source thumbnails.
    Same visual tokens as DW2 · Story Archive, without theme binding. */
@@ -23,7 +23,7 @@
     align-items: end;
     justify-content: space-between;
     gap: 12px;
-    padding: 8px 7px 12px;
+    padding: 5px 5px 10px;
     min-width: 0;
     border-bottom: 1px solid var(--dw2cg-faint);
     font-family: var(--dw2cg-font) !important;
@@ -91,17 +91,20 @@ body.dw2cg-active #rm_characters_block :is(
 }
 body.dw2cg-active #rm_characters_block #charListFixedTop {
     flex: 0 0 auto;
-    padding: 8px 9px 0;
+    padding: 3px 9px 0;
     min-width: 0;
 }
 body.dw2cg-active #rm_characters_block #rm_button_bar {
     display: flex !important;
     flex-wrap: wrap !important;
     align-items: center !important;
-    gap: 7px 8px !important;
+    gap: 5px 7px !important;
     min-width: 0;
     margin: 10px 0 8px !important;
-    padding: 0 2px;
+    padding: 5px 6px !important;
+    border: 1px solid var(--dw2cg-faint);
+    border-radius: 6px;
+    background: rgba(255,255,255,.018);
 }
 body.dw2cg-active #rm_characters_block #rm_buttons_container {
     display: inline-flex;
@@ -117,11 +120,11 @@ body.dw2cg-active #rm_characters_block #rm_button_bar > :is(
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    width: 34px !important;
-    min-width: 34px !important;
-    height: 34px !important;
-    min-height: 34px !important;
-    flex: 0 0 34px !important;
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    flex: 0 0 32px !important;
     margin: 0 !important;
     padding: 0 !important;
     border: 1px solid transparent !important;
@@ -155,7 +158,7 @@ body.dw2cg-active #rm_characters_block #character_sort_order {
 }
 body.dw2cg-active #rm_characters_block #form_character_search_form {
     min-width: 0;
-    margin: 1px 0 8px !important;
+    margin: 1px 0 4px !important;
 }
 body.dw2cg-active #rm_characters_block #character_search_bar {
     width: 100% !important;
@@ -172,10 +175,57 @@ body.dw2cg-active #rm_characters_block #character_search_bar::placeholder {
     color: var(--dw2cg-muted);
     opacity: 1;
 }
-body.dw2cg-active #rm_characters_block .rm_tag_controls {
+body.dw2cg-active #rm_characters_block #charListFixedTop > .rm_tag_controls {
     max-width: 100%;
     min-width: 0;
     color: var(--dw2cg-muted);
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch;
+    gap: 4px;
+    margin: 3px 4px 0 !important;
+    max-height: none;
+    overflow: visible;
+}
+body.dw2cg-active #rm_characters_block #charListFixedTop > .rm_tag_controls > .rm_tag_filter {
+    display: flex;
+    flex-wrap: nowrap !important;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding: 7px 5px 8px;
+    border: 1px solid var(--dw2cg-faint);
+    border-radius: 6px;
+    background: rgba(34,29,27,.26);
+}
+body.dw2cg-active #rm_characters_block #charListFixedTop > .rm_tag_controls > .rm_tag_filter > .tag {
+    flex: 0 0 auto;
+}
+body.dw2cg-active #rm_characters_block #charListFixedTop > .rm_tag_controls > .rm_tag_bogus_drilldown:empty {
+    display: none !important;
+}
+body.dw2cg-active #rm_characters_block #charListFixedTop > .rm_tag_controls > .rm_tag_bogus_drilldown:not(:empty) {
+    display: flex !important;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 3px;
+    height: auto;
+    min-height: 30px;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 6px;
+}
+body.dw2cg-active #rm_characters_block #charListFixedTop:not(.dw2cg-filters-open)
+    > .rm_tag_controls > .rm_tag_filter {
+    display: none !important;
 }
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination {
     order: 3 !important;
@@ -487,4 +537,81 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_pagination {
 }
 #dw2cg-settings .dw2cg-settings-option input {
     accent-color: #bfd9e5;
+}
+
+/* DW2 · Character Gallery v1.0.2: elegant, narrow expand row */
+#rm_characters_block #dw2cg-filter-strip { display: none; }
+body.dw2cg-active #rm_characters_block #dw2cg-filter-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin: 5px 4px 1px;
+    padding: 4px 1px 5px;
+    border-bottom: 1px solid var(--dw2cg-faint);
+    min-width: 0;
+    font-family: var(--dw2cg-font) !important;
+}
+body.dw2cg-active #rm_characters_block .dw2cg-filter-caption {
+    color: var(--dw2cg-muted);
+    font: 500 9px/1.5 var(--dw2cg-font) !important;
+    letter-spacing: .14em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+body.dw2cg-active #rm_characters_block #dw2cg-filter-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    min-height: 32px;
+    padding: 5px 9px !important;
+    margin: 0 !important;
+    border: 1px solid var(--dw2cg-line) !important;
+    border-radius: 4px !important;
+    color: var(--dw2cg-muted) !important;
+    background: var(--dw2cg-panel) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    font: 500 11px/1.5 var(--dw2cg-font) !important;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+body.dw2cg-active #rm_characters_block #dw2cg-filter-toggle:hover,
+body.dw2cg-active #rm_characters_block #dw2cg-filter-toggle[aria-expanded="true"] {
+    color: var(--dw2cg-ink) !important;
+    border-color: rgba(191,217,229,.3) !important;
+}
+body.dw2cg-active #rm_characters_block #dw2cg-filter-toggle i {
+    font-family: 'Font Awesome 6 Free' !important;
+    font-weight: 900 !important;
+    color: var(--dw2cg-accent);
+    font-size: 11px;
+}
+body.dw2cg-active #rm_characters_block #dw2cg-filter-toggle .dw2cg-filter-arrow {
+    color: var(--dw2cg-muted);
+    transition: transform .18s ease;
+}
+body.dw2cg-active #rm_characters_block #dw2cg-filter-toggle[aria-expanded="true"] .dw2cg-filter-arrow {
+    transform: rotate(180deg);
+}
+body.dw2cg-active #rm_characters_block #dw2cg-filter-toggle:focus-visible {
+    outline: 2px solid var(--dw2cg-accent) !important;
+    outline-offset: 2px;
+}
+/* Hint for already-active TT native filters, even while controls are folded. */
+@supports selector(:has(*)) {
+    body.dw2cg-active #rm_characters_block #charListFixedTop:has(
+        > .rm_tag_controls > .rm_tag_filter > .tag:is(.selected,.excluded)
+    ) #dw2cg-filter-toggle::before {
+        content: '';
+        display: block;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--dw2cg-rose);
+        box-shadow: 0 0 6px rgba(255,228,225,.3);
+    }
 }

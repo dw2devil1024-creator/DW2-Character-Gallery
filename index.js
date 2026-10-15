@@ -1,5 +1,5 @@
 /*
- * DW2 · Character Gallery | v1.0.1
+ * DW2 · Character Gallery | v1.0.2
  * TT native character-list presentation only. Never clone/rebind character
  * cards: TT owns its delegated click handlers, sort/filter and bulk actions.
  */
@@ -7,6 +7,8 @@ const STORAGE_KEY = 'dw2cg:gallery:enabled';
 const ROOT_CLASS = 'dw2cg-active';
 const HEADER_ID = 'dw2cg-header';
 const SETTINGS_ID = 'dw2cg-settings';
+const FILTER_STRIP_ID = 'dw2cg-filter-strip';
+const FILTERS_KEY = 'dw2cg:filters:open';
 let runtimeEnabled = false;
 let pendingObserver = null;
 
@@ -89,6 +91,62 @@ function mountHeader() {
 }
 
 
+
+/* Hide only the native tag/action row. TT owns its filter clicks and its folder
+ * breadcrumbs, which must remain visible even when the tray is collapsed. */
+function readFilterOpen() {
+    try { return localStorage.getItem(FILTERS_KEY) === '1'; }
+    catch { return false; }
+}
+function writeFilterOpen(value) {
+    try { localStorage.setItem(FILTERS_KEY, value ? '1' : '0'); }
+    catch { /* The session's expand/collapse still works. */ }
+}
+function syncFilterStrip(open) {
+    const top = document.querySelector('#rm_characters_block #charListFixedTop');
+    top?.classList.toggle('dw2cg-filters-open', Boolean(open));
+    const toggle = document.getElementById('dw2cg-filter-toggle');
+    if (!toggle) return;
+    toggle.setAttribute('aria-expanded', String(Boolean(open)));
+    const verb = toggle.querySelector('.dw2cg-filter-verb');
+    if (verb) verb.textContent = open ? '收起工具' : '筛选与整理';
+    toggle.title = open ? '收起角色筛选与整理工具' : '展开角色筛选与整理工具';
+}
+function mountFilterStrip() {
+    const top = document.querySelector('#rm_characters_block #charListFixedTop');
+    const controls = top?.querySelector(':scope > .rm_tag_controls');
+    if (!top || !controls || !runtimeEnabled) return false;
+    if (document.getElementById(FILTER_STRIP_ID)) return true;
+    const strip = document.createElement('div');
+    strip.id = FILTER_STRIP_ID;
+    const caption = document.createElement('span');
+    caption.className = 'dw2cg-filter-caption';
+    caption.textContent = 'COLLECTION · 角色浏览';
+    const toggle = document.createElement('button');
+    toggle.id = 'dw2cg-filter-toggle';
+    toggle.type = 'button';
+    toggle.className = 'dw2cg-filter-toggle';
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-sliders';
+    icon.setAttribute('aria-hidden','true');
+    const verb = document.createElement('span');
+    verb.className = 'dw2cg-filter-verb';
+    const arrow = document.createElement('i');
+    arrow.className = 'fa-solid fa-chevron-down dw2cg-filter-arrow';
+    arrow.setAttribute('aria-hidden','true');
+    toggle.append(icon, verb, arrow);
+    toggle.addEventListener('click', () => {
+        const next = !top.classList.contains('dw2cg-filters-open');
+        writeFilterOpen(next);
+        syncFilterStrip(next);
+    });
+    strip.append(caption, toggle);
+    // Never move or clone TT's actual filters; keep its rerender/event contract.
+    controls.before(strip);
+    syncFilterStrip(readFilterOpen());
+    return true;
+}
+
 function mountSettings() {
     const host = document.getElementById('extensions_settings2')
         || document.getElementById('extensions_settings');
@@ -136,7 +194,7 @@ function mountSettings() {
     content.className = 'inline-drawer-content';
     const status = document.createElement('p');
     status.className = 'dw2cg-settings-note';
-    status.textContent = '已加载 · v1.0.1 · DW2 独立视觉';
+    status.textContent = '已加载 · v1.0.2 · DW2 独立视觉';
     const option = document.createElement('label');
     option.className = 'checkbox_label dw2cg-settings-option';
     const checkbox = document.createElement('input');
@@ -152,7 +210,7 @@ function mountSettings() {
     option.append(checkbox, desc);
     const guide = document.createElement('p');
     guide.className = 'dw2cg-settings-note';
-    guide.textContent = '三列封面 · 底部翻页 · 保留 TT 原生点击与管理功能';
+    guide.textContent = '三列封面 · 底部翻页 · 筛选横向收纳 · 保留原生管理';
     content.append(status, option, guide);
     drawer.append(heading, content);
     panel.append(drawer);
@@ -166,14 +224,16 @@ export function onEnable() {
     runtimeEnabled = true;
     applyMode(preferredEnabled());
     const headerMounted = mountHeader();
+    const filterMounted = mountFilterStrip();
     const settingsMounted = mountSettings();
-    if (headerMounted && settingsMounted) return;
+    if (headerMounted && filterMounted && settingsMounted) return;
     // If TT constructs one of its native hosts late, retry until both exist.
     if (document.body) {
         pendingObserver = new MutationObserver(() => {
             const readyHeader = mountHeader();
+            const readyFilter = mountFilterStrip();
             const readySettings = mountSettings();
-            if (readyHeader && readySettings) {
+            if (readyHeader && readyFilter && readySettings) {
                 pendingObserver?.disconnect();
                 pendingObserver = null;
             }
@@ -188,6 +248,8 @@ export function onDisable() {
     pendingObserver = null;
     document.body?.classList.remove(ROOT_CLASS);
     document.getElementById(HEADER_ID)?.remove();
+    document.getElementById(FILTER_STRIP_ID)?.remove();
+    document.querySelector('#rm_characters_block #charListFixedTop')?.classList.remove('dw2cg-filters-open');
     document.getElementById(SETTINGS_ID)?.remove();
 }
 
