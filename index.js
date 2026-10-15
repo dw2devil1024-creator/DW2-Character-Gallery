@@ -1,5 +1,5 @@
 /*
- * DW2 · Character Gallery | v1.0.6
+ * DW2 · Character Gallery | v1.0.7
  * TT native character-list presentation only. Never clone/rebind character
  * cards: TT owns its delegated click handlers, sort/filter and bulk actions.
  */
@@ -17,7 +17,7 @@ const QUICK_ACTION_IDS = Object.freeze([
     'rm_button_create', 'character_import_button',
     'external_import_button', 'rm_button_group_chats', 'rm_buttons_container'
 ]);
-const BUILD_VERSION = '1.0.6';
+const BUILD_VERSION = '1.0.7';
 let checkedUpdate = null;
 let updateBusy = false;
 const NATIVE_ACTION_IDS = Object.freeze([
@@ -29,6 +29,16 @@ const NATIVE_ACTION_IDS = Object.freeze([
 ]);
 let runtimeEnabled = false;
 let pendingObserver = null;
+const PINS_KEY = 'dw2cg:pinned:avatars:v1';
+const PINNED_VIEW_VALUE = 'dw2cg-only-pinned';
+let pinnedAvatars = new Set();
+let pinnedOnly = false;
+let lastNativeSortValue = '';
+let paginationOriginal = null;
+let paginationBridge = null;
+let sortSelect = null;
+let pageRefreshPromise = null;
+
 
 function preferredEnabled() {
     try {
@@ -156,13 +166,18 @@ function applyMode(value) {
     if (!runtimeEnabled || !document.body) return;
     document.body.classList.toggle(ROOT_CLASS, Boolean(value));
     if (value) {
+        attachPaginationBridge();
+        updatePinnedSortOption();
         positionNativeActions(true);
         positionGalleryToolbar(true);
     } else {
+        resetPinnedSortOption();
+        removePinButtons();
         positionGalleryToolbar(false);
         positionNativeActions(false);
     }
     renderToggle();
+    void refreshNativeCharacterList();
 }
 
 function createModeToggle() {
@@ -446,7 +461,7 @@ function mountSettings() {
     content.className = 'inline-drawer-content';
     const status = document.createElement('p');
     status.className = 'dw2cg-settings-note';
-    status.textContent = '已加载 · v1.0.6 · DW2 独立视觉';
+    status.textContent = '已加载 · v1.0.7 · DW2 独立视觉';
     const option = document.createElement('label');
     option.className = 'checkbox_label dw2cg-settings-option';
     const checkbox = document.createElement('input');
@@ -462,7 +477,7 @@ function mountSettings() {
     option.append(checkbox, desc);
     const guide = document.createElement('p');
     guide.className = 'dw2cg-settings-note';
-    guide.textContent = '三列画廊 · 横向收纳 · 原生交互';
+    guide.textContent = '三列画廊 · 卡面置顶 · 横向收纳 · 原生交互';
     content.append(status, option);
     installUpdateControls(content);
     content.append(guide);
@@ -473,21 +488,239 @@ function mountSettings() {
     return true;
 }
 
+
+/* Pinned state is private to this plugin. Character records, favorites, tags,
+ * IDs and TT's own sorting settings are not changed. Avatar filenames form
+ * stable character keys across native sort and import order changes. */
+function readPinnedAvatars() {
+    try {
+        const raw = JSON.parse(localStorage.getItem(PINS_KEY) || '[]');
+        return new Set(Array.isArray(raw) ? raw.filter(x => typeof x === 'string' && x.length > 0) : []);
+    } catch { return new Set(); }
+}
+function savePinnedAvatars() {
+    try { localStorage.setItem(PINS_KEY, JSON.stringify([...pinnedAvatars])); }
+    catch { /* Storage restriction: pins survive until this page reloads. */ }
+}
+function avatarKey(item) {
+    return typeof item?.avatar === 'string' && item.avatar !== 'none' && item.avatar.length > 0
+        ? 'avatar:' + item.avatar
+        : null;
+}
+function pinKeyForCard(card) {
+    const id = Number(card.dataset.chid);
+    const entity = globalThis.SillyTavern?.getContext?.()?.characters?.[id];
+    // Data-chid is transient; never save it as a pin identifier.
+    return avatarKey(entity);
+}
+function sortPinnedEntities(entities) {
+    // TT can temporarily switch its own selector to Search when a query
+    // starts. Do not keep a hidden custom-only-pins state after that.
+    if (pinnedOnly && document.getElementById('character_sort_order')?.value !== PINNED_VIEW_VALUE) {
+        pinnedOnly = false;
+    }
+    if (pinnedOnly) {
+        return entities.filter(entity => entity?.type === 'character' && pinnedAvatars.has(avatarKey(entity.item)));
+    }
+    if (!pinnedAvatars.size) return entities;
+    const folders = [], pinned = [], others = [];
+    for (const entity of entities) {
+        // Preserve TT's own folder order and folder navigation.
+        if (entity?.type === 'tag') folders.push(entity);
+        else if (entity?.type === 'character' && pinnedAvatars.has(avatarKey(entity.item))) pinned.push(entity);
+        else others.push(entity);
+    }
+    return [...folders, ...pinned, ...others];
+}
+function removePinButtons() {
+    document.querySelectorAll('#rm_print_characters_block .dw2cg-pin').forEach(el => el.remove());
+}
+function addPinButtons() {
+    if (!runtimeEnabled || !document.body?.classList.contains(ROOT_CLASS)) return;
+    const cards = document.querySelectorAll('#rm_print_characters_block > .character_select[data-chid]');
+    for (const card of cards) {
+        const key = pinKeyForCard(card);
+        // Character entries without a native avatar filename are not pinned
+        // by unstable numeric IDs. This protects records after resort/import.
+        if (!key) continue;
+        let button = card.querySelector(':scope > .dw2cg-pin');
+        if (!button) {
+            button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'dw2cg-pin';
+            const icon = document.createElement('i');
+            icon.className = 'fa-solid fa-thumbtack';
+            icon.setAttribute('aria-hidden','true');
+            button.append(icon);
+            button.addEventListener('pointerdown', event => event.stopPropagation());
+            button.addEventListener('mousedown', event => event.stopPropagation());
+            button.addEventListener('touchstart', event => event.stopPropagation(), { passive: true });
+            button.addEventListener('click', async event => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                const currentKey = pinKeyForCard(card);
+                if (!currentKey) return;
+                if (pinnedAvatars.has(currentKey)) pinnedAvatars.delete(currentKey);
+                else pinnedAvatars.add(currentKey);
+                savePinnedAvatars();
+                // Decorate immediately while native rendering is in flight.
+                button.classList.toggle('dw2cg-is-pinned', pinnedAvatars.has(currentKey));
+                card.classList.toggle('dw2cg-is-pinned', pinnedAvatars.has(currentKey));
+                button.setAttribute('aria-pressed', String(pinnedAvatars.has(currentKey)));
+                await refreshNativeCharacterList();
+            });
+            card.append(button);
+        }
+        const selected = pinnedAvatars.has(key);
+        button.classList.toggle('dw2cg-is-pinned', selected);
+        card.classList.toggle('dw2cg-is-pinned', selected);
+        button.setAttribute('aria-pressed', String(selected));
+        button.setAttribute('aria-label', selected ? '取消角色置顶' : '置顶角色');
+        button.title = selected ? '取消置顶' : '置顶角色';
+    }
+}
+async function refreshNativeCharacterList(force = false) {
+    if (!runtimeEnabled && !force) return;
+    // Coalesce fast taps: TT printCharacters(true) preserves the native
+    // pagination algorithm but resets to page one so newly pinned items show.
+    if (pageRefreshPromise) return pageRefreshPromise;
+    pageRefreshPromise = (async () => {
+        try {
+            const root = new URL('../../../../', import.meta.url);
+            const native = await import(new URL('script.js', root).href);
+            if (runtimeEnabled || force) await native.printCharacters(true);
+        } catch (error) {
+            console.warn('[DW2 Character Gallery] Could not refresh native character list:', error);
+        } finally {
+            pageRefreshPromise = null;
+        }
+    })();
+    return pageRefreshPromise;
+}
+/* TT's native list passes its fully-filtered, sorted ENTIRE entity array into
+ * jquery.pagination before pagination takes place. Scope our reversible bridge
+ * to that one container, otherwise pinned cards on later pages could not reach
+ * the front. The original callback and native paginator remain authoritative.
+ */
+function attachPaginationBridge() {
+    const $ = globalThis.jQuery || globalThis.$;
+    if (!$?.fn || typeof $.fn.pagination !== 'function') return false;
+    if (paginationBridge && $.fn.pagination === paginationBridge) return true;
+    if (paginationBridge) return false; // Another extension replaced it; do not stack blindly.
+    const original = $.fn.pagination;
+    const wrapped = function (...args) {
+        if (runtimeEnabled && document.body?.classList.contains(ROOT_CLASS)
+            && this?.[0]?.id === 'rm_print_characters_pagination'
+            && args[0] && typeof args[0] === 'object'
+            && Array.isArray(args[0].dataSource)) {
+            const options = { ...args[0] };
+            options.dataSource = sortPinnedEntities(options.dataSource);
+            const callback = options.callback;
+            if (typeof callback === 'function') {
+                options.callback = async function (...callbackArgs) {
+                    const result = await callback.apply(this, callbackArgs);
+                    addPinButtons();
+                    return result;
+                };
+            }
+            args[0] = options;
+        }
+        return original.apply(this, args);
+    };
+    // Keep any plugin metadata on the original method accessible to TT.
+    Object.assign(wrapped, original);
+    paginationOriginal = original;
+    paginationBridge = wrapped;
+    $.fn.pagination = wrapped;
+    return true;
+}
+function detachPaginationBridge() {
+    const $ = globalThis.jQuery || globalThis.$;
+    if ($?.fn && $.fn.pagination === paginationBridge) $.fn.pagination = paginationOriginal;
+    paginationBridge = null;
+    paginationOriginal = null;
+}
+function updatePinnedSortOption() {
+    const select = document.getElementById('character_sort_order');
+    if (!select || !runtimeEnabled) return false;
+    // Never expose our custom option when the user is in TT native mode.
+    if (!document.body?.classList.contains(ROOT_CLASS)) return true;
+    if (sortSelect !== select) {
+        sortSelect?.removeEventListener('change', onPinnedSortChange, true);
+        sortSelect = select;
+        select.addEventListener('change', onPinnedSortChange, true);
+        lastNativeSortValue = select.value;
+    }
+    let option = select.querySelector('option[data-dw2cg-pinned]');
+    if (!option) {
+        option = document.createElement('option');
+        option.value = PINNED_VIEW_VALUE;
+        option.textContent = '仅看置顶';
+        option.dataset.dw2cgPinned = 'true';
+        select.append(option);
+    }
+    if (pinnedOnly) select.value = PINNED_VIEW_VALUE;
+    return true;
+}
+function onPinnedSortChange(event) {
+    if (!runtimeEnabled || !document.body?.classList.contains(ROOT_CLASS)) return;
+    const selected = event.currentTarget.value;
+    if (selected === PINNED_VIEW_VALUE) {
+        // The TT handler would otherwise persist an invalid sort_field.
+        event.stopImmediatePropagation();
+        pinnedOnly = true;
+        void refreshNativeCharacterList();
+    } else {
+        lastNativeSortValue = selected;
+        pinnedOnly = false;
+        // Do not stop propagation: TT must update its native sort settings.
+    }
+}
+function resetPinnedSortOption() {
+    if (sortSelect) {
+        sortSelect.removeEventListener('change', onPinnedSortChange, true);
+        const option = sortSelect.querySelector('option[data-dw2cg-pinned]');
+        if (option?.selected) {
+            const nativeOption = [...sortSelect.options].find(x => x.value === lastNativeSortValue && x !== option)
+                || [...sortSelect.options].find(x => x !== option && !x.hidden);
+            if (nativeOption) nativeOption.selected = true;
+        }
+        option?.remove();
+    }
+    sortSelect = null;
+    pinnedOnly = false;
+}
+function initializePinFeature() {
+    pinnedAvatars = readPinnedAvatars();
+    attachPaginationBridge();
+    updatePinnedSortOption();
+    addPinButtons();
+}
+
 export function onEnable() {
     if (runtimeEnabled) return;
     runtimeEnabled = true;
     applyMode(preferredEnabled());
+    initializePinFeature();
     const headerMounted = mountHeader();
     const filterMounted = mountFilterStrip();
     const settingsMounted = mountSettings();
-    if (headerMounted && filterMounted && settingsMounted) return;
+    const pinsReady = attachPaginationBridge() && updatePinnedSortOption();
+    if (headerMounted && filterMounted && settingsMounted && pinsReady) {
+        // The native page may have been drawn before pagination was bridged.
+        void refreshNativeCharacterList();
+        return;
+    }
     // If TT constructs one of its native hosts late, retry until both exist.
     if (document.body) {
         pendingObserver = new MutationObserver(() => {
             const readyHeader = mountHeader();
             const readyFilter = mountFilterStrip();
             const readySettings = mountSettings();
-            if (readyHeader && readyFilter && readySettings) {
+            const readyPins = attachPaginationBridge() && updatePinnedSortOption();
+            if (readyHeader && readyFilter && readySettings && readyPins) {
+                addPinButtons();
+                void refreshNativeCharacterList();
                 pendingObserver?.disconnect();
                 pendingObserver = null;
             }
@@ -500,6 +733,9 @@ export function onDisable() {
     runtimeEnabled = false;
     pendingObserver?.disconnect();
     pendingObserver = null;
+    resetPinnedSortOption();
+    detachPaginationBridge();
+    removePinButtons();
     positionGalleryToolbar(false);
     positionNativeActions(false);
     document.body?.classList.remove(ROOT_CLASS);
@@ -507,6 +743,9 @@ export function onDisable() {
     document.getElementById(FILTER_STRIP_ID)?.remove();
     document.querySelector('#rm_characters_block #charListFixedTop')?.classList.remove('dw2cg-filters-open');
     document.getElementById(SETTINGS_ID)?.remove();
+    // Removing the bridge does not redraw TT's last pinned datasource by
+    // itself. Reprint once so native mode immediately regains its full list.
+    void refreshNativeCharacterList(true);
 }
 
 onEnable();
