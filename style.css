@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 
-/* DW2 · Character Gallery | v1.0.0
+/* DW2 · Character Gallery | v1.0.1
    Scope: TT native character-list panel only.
    Preserve native DOM, delegated click handlers and source thumbnails.
    Same visual tokens as DW2 · Story Archive, without theme binding. */
@@ -178,6 +178,10 @@ body.dw2cg-active #rm_characters_block .rm_tag_controls {
     color: var(--dw2cg-muted);
 }
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination {
+    order: 3 !important;
+    flex: 0 0 auto !important;
+    position: relative;
+    z-index: 2;
     display: flex !important;
     flex-wrap: wrap !important;
     align-items: center !important;
@@ -185,16 +189,24 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_pagination {
     min-height: 38px;
     margin: 2px 8px 3px !important;
     padding: 5px 0 8px !important;
-    border-bottom: 1px solid var(--dw2cg-faint);
+    border-top: 1px solid var(--dw2cg-faint);
+    border-bottom: 0;
+    background: var(--dw2cg-panel);
     color: var(--dw2cg-muted);
     font: 11px/1.5 var(--dw2cg-font) !important;
 }
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination :is(
-    .menu_button, .paginationjs-nav, .paginationjs-size-changer,
-    .paginationjs-pages
+    .paginationjs-nav, .paginationjs-size-changer
 ) {
     color: var(--dw2cg-muted) !important;
     font-family: var(--dw2cg-font) !important;
+}
+/* These are real TT Font Awesome buttons, not text labels. Do not overwrite
+   their icon font again: v1.0.0 did and produced crossed-square glyphs. */
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .menu_button.fa-solid,
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-pages li a {
+    font-family: 'Font Awesome 6 Free' !important;
+    font-weight: 900 !important;
 }
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .menu_button {
     min-width: 30px;
@@ -222,13 +234,13 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_pagination :is(
 /* Native list toggle remains authoritative. Gallery cards only in TT grid mode. */
 body.dw2cg-active.charListGrid #rm_characters_block #rm_print_characters_block {
     display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     justify-content: stretch !important;
     justify-items: stretch;
     align-items: start;
     align-content: start;
-    gap: 17px 12px !important;
-    padding: 13px 12px 28px !important;
+    gap: 13px 9px !important;
+    padding: 11px 9px 22px !important;
     margin: 0 !important;
     min-width: 0;
     min-height: 0;
@@ -247,9 +259,9 @@ body.dw2cg-active.charListGrid #rm_print_characters_block > :is(
     min-width: 0 !important;
     height: auto !important;
     margin: 0 !important;
-    padding: 6px 6px 9px !important;
+    padding: 4px 4px 7px !important;
     border: 1px solid var(--dw2cg-faint) !important;
-    border-radius: 12px !important;
+    border-radius: 9px !important;
     background: rgba(34,29,27,.24) !important;
     box-shadow: none !important;
     color: var(--dw2cg-ink);
@@ -285,7 +297,7 @@ body.dw2cg-active.charListGrid #rm_print_characters_block > :is(
     margin: 0 !important;
     padding: 0 !important;
     border: 0 !important;
-    border-radius: 8px !important;
+    border-radius: 6px !important;
     outline: none !important;
     background: var(--dw2cg-inset) !important;
     overflow: hidden;
@@ -323,7 +335,7 @@ body.dw2cg-active.charListGrid #rm_print_characters_block :is(
     max-width: none !important;
     min-width: 0 !important;
     margin: 0 !important;
-    padding: 9px 0 0 !important;
+    padding: 6px 0 0 !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
@@ -340,7 +352,7 @@ body.dw2cg-active.charListGrid #rm_print_characters_block :is(
     text-overflow: ellipsis;
     white-space: nowrap;
     text-align: center;
-    font: 600 13px/1.55 var(--dw2cg-font) !important;
+    font: 600 12px/1.55 var(--dw2cg-font) !important;
     color: var(--dw2cg-ink) !important;
     text-shadow: none !important;
 }
@@ -405,8 +417,8 @@ body.dw2cg-active #rm_characters_block #character_search_bar:focus-visible {
     #rm_characters_block .dw2cg-overline { font-size: 8px; letter-spacing: .11em; }
     #rm_characters_block #dw2cg-toggle { padding: 6px 7px !important; }
     body.dw2cg-active.charListGrid #rm_characters_block #rm_print_characters_block {
-        gap: 14px 9px !important;
-        padding: 11px 8px 25px !important;
+        gap: 11px 7px !important;
+        padding: 10px 7px 22px !important;
     }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -415,4 +427,64 @@ body.dw2cg-active #rm_characters_block #character_search_bar:focus-visible {
         transition-duration: .01ms !important;
         animation-duration: .01ms !important;
     }
+}
+
+/* Move TT's existing pagination element under the independent scrolling grid.
+   It stays accessible as a footer, without DOM moves or pagination re-binding. */
+body.dw2cg-active #rm_characters_block {
+    min-height: 0;
+}
+body.dw2cg-active #rm_characters_block #charListFixedTop {
+    order: 1;
+}
+body.dw2cg-active #rm_characters_block #rm_print_characters_block {
+    order: 2;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+}
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination {
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* DW2 extension settings: same TT inline-drawer pattern as the bookshelf. */
+#dw2cg-settings {
+    --dw2cg-settings-ink: #f3ece7;
+    --dw2cg-settings-muted: rgba(229,219,212,.62);
+    font-family: 'Noto Serif SC','Songti SC','STSong',serif !important;
+    color: var(--dw2cg-settings-ink);
+    margin: 0;
+}
+#dw2cg-settings .dw2cg-settings-heading {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    line-height: 1.55;
+}
+#dw2cg-settings .dw2cg-settings-heading b {
+    font: 600 17px/1.5 'Noto Serif SC','Songti SC','STSong',serif !important;
+    letter-spacing: .035em;
+    color: var(--dw2cg-settings-ink);
+}
+#dw2cg-settings .dw2cg-settings-credit {
+    color: var(--dw2cg-settings-muted);
+    font: 500 11px/1.4 'Noto Serif SC','Songti SC','STSong',serif !important;
+    letter-spacing: .12em;
+}
+#dw2cg-settings .dw2cg-settings-note {
+    font: 400 12px/1.7 'Noto Serif SC','Songti SC','STSong',serif !important;
+    color: var(--dw2cg-settings-muted);
+    margin: 9px 0;
+}
+#dw2cg-settings .dw2cg-settings-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--dw2cg-settings-ink);
+    font-family: 'Noto Serif SC','Songti SC','STSong',serif !important;
+}
+#dw2cg-settings .dw2cg-settings-option input {
+    accent-color: #bfd9e5;
 }

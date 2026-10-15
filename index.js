@@ -1,11 +1,12 @@
 /*
- * DW2 · Character Gallery | v1.0.0
+ * DW2 · Character Gallery | v1.0.1
  * TT native character-list presentation only. Never clone/rebind character
  * cards: TT owns its delegated click handlers, sort/filter and bulk actions.
  */
 const STORAGE_KEY = 'dw2cg:gallery:enabled';
 const ROOT_CLASS = 'dw2cg-active';
 const HEADER_ID = 'dw2cg-header';
+const SETTINGS_ID = 'dw2cg-settings';
 let runtimeEnabled = false;
 let pendingObserver = null;
 
@@ -26,14 +27,17 @@ function setPreferredEnabled(value) {
 }
 
 function renderToggle() {
+    const active = Boolean(document.body?.classList.contains(ROOT_CLASS));
     const button = document.getElementById('dw2cg-toggle');
-    if (!button) return;
-    const active = document.body?.classList.contains(ROOT_CLASS);
-    button.setAttribute('aria-pressed', String(Boolean(active)));
-    button.setAttribute('aria-label', active ? '关闭 DW2 角色画廊美化' : '启用 DW2 角色画廊美化');
-    button.title = active ? '切换到 TT 原生外观' : '启用 DW2 角色画廊';
-    const label = button.querySelector('.dw2cg-switch-label');
-    if (label) label.textContent = active ? '画廊模式' : '原生模式';
+    if (button) {
+        button.setAttribute('aria-pressed', String(active));
+        button.setAttribute('aria-label', active ? '关闭 DW2 角色画廊美化' : '启用 DW2 角色画廊美化');
+        button.title = active ? '切换到 TT 原生外观' : '启用 DW2 角色画廊';
+        const label = button.querySelector('.dw2cg-switch-label');
+        if (label) label.textContent = active ? '画廊模式' : '原生模式';
+    }
+    const checkbox = document.getElementById('dw2cg-settings-toggle');
+    if (checkbox) checkbox.checked = active;
 }
 
 function applyMode(value) {
@@ -84,15 +88,92 @@ function mountHeader() {
     return true;
 }
 
+
+function mountSettings() {
+    const host = document.getElementById('extensions_settings2')
+        || document.getElementById('extensions_settings');
+    if (!host || !runtimeEnabled) return false;
+    if (document.getElementById(SETTINGS_ID)) {
+        renderToggle();
+        return true;
+    }
+
+    // TT's own inline-drawer handler operates the accordion. We only supply
+    // its content and leave native extension management and fold behavior intact.
+    const panel = document.createElement('div');
+    panel.id = SETTINGS_ID;
+    panel.className = 'extension_container';
+    const drawer = document.createElement('div');
+    drawer.className = 'inline-drawer';
+    const heading = document.createElement('div');
+    heading.className = 'inline-drawer-toggle inline-drawer-header';
+    heading.tabIndex = 0;
+    heading.setAttribute('role', 'button');
+    heading.setAttribute('aria-expanded', 'false');
+    heading.setAttribute('aria-controls', 'dw2cg-settings-content');
+
+    const title = document.createElement('div');
+    title.className = 'dw2cg-settings-heading';
+    const name = document.createElement('b');
+    name.textContent = 'DW2 · Character Gallery';
+    const credit = document.createElement('span');
+    credit.className = 'dw2cg-settings-credit';
+    credit.textContent = 'S.A. · DW2';
+    title.append(name, credit);
+    const arrow = document.createElement('div');
+    arrow.className = 'inline-drawer-icon fa-solid fa-circle-chevron-down down';
+    arrow.setAttribute('aria-hidden', 'true');
+    heading.append(title, arrow);
+    heading.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        event.stopPropagation();
+        heading.click();
+    });
+
+    const content = document.createElement('div');
+    content.id = 'dw2cg-settings-content';
+    content.className = 'inline-drawer-content';
+    const status = document.createElement('p');
+    status.className = 'dw2cg-settings-note';
+    status.textContent = '已加载 · v1.0.1 · DW2 独立视觉';
+    const option = document.createElement('label');
+    option.className = 'checkbox_label dw2cg-settings-option';
+    const checkbox = document.createElement('input');
+    checkbox.id = 'dw2cg-settings-toggle';
+    checkbox.type = 'checkbox';
+    checkbox.checked = document.body.classList.contains(ROOT_CLASS);
+    checkbox.addEventListener('change', () => {
+        setPreferredEnabled(checkbox.checked);
+        applyMode(checkbox.checked);
+    });
+    const desc = document.createElement('span');
+    desc.textContent = '启用角色画廊美化';
+    option.append(checkbox, desc);
+    const guide = document.createElement('p');
+    guide.className = 'dw2cg-settings-note';
+    guide.textContent = '三列封面 · 底部翻页 · 保留 TT 原生点击与管理功能';
+    content.append(status, option, guide);
+    drawer.append(heading, content);
+    panel.append(drawer);
+    host.append(panel);
+    renderToggle();
+    return true;
+}
+
 export function onEnable() {
     if (runtimeEnabled) return;
     runtimeEnabled = true;
     applyMode(preferredEnabled());
-    if (mountHeader()) return;
-    // Rare late DOM cases only. Disconnect as soon as the native panel exists.
+    const headerMounted = mountHeader();
+    const settingsMounted = mountSettings();
+    if (headerMounted && settingsMounted) return;
+    // If TT constructs one of its native hosts late, retry until both exist.
     if (document.body) {
         pendingObserver = new MutationObserver(() => {
-            if (mountHeader()) {
+            const readyHeader = mountHeader();
+            const readySettings = mountSettings();
+            if (readyHeader && readySettings) {
                 pendingObserver?.disconnect();
                 pendingObserver = null;
             }
@@ -107,6 +188,7 @@ export function onDisable() {
     pendingObserver = null;
     document.body?.classList.remove(ROOT_CLASS);
     document.getElementById(HEADER_ID)?.remove();
+    document.getElementById(SETTINGS_ID)?.remove();
 }
 
 onEnable();
