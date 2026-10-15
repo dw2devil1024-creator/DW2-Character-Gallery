@@ -285,11 +285,20 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .menu_but
     box-shadow: none !important;
 }
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-pages li a {
-    border: 1px solid var(--dw2cg-line) !important;
+    border: 0 !important;
     border-radius: 4px !important;
-    background: rgba(34,29,27,.16) !important;
-    color: var(--dw2cg-ink) !important;
+    background: transparent !important;
+    color: var(--dw2cg-muted) !important;
     box-shadow: none !important;
+    text-shadow: none !important;
+    font-family: 'Font Awesome 6 Free' !important;
+    font-weight: 900 !important;
+    font-size: 13px !important;
+}
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-pages li a:hover,
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-pages li a:focus-visible {
+    color: var(--dw2cg-accent) !important;
+    background: rgba(191,217,229,.065) !important;
 }
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-size-changer select {
     border: 0 !important;
