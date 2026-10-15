@@ -1,5 +1,5 @@
 /*
- * DW2 · Character Gallery | v1.0.3
+ * DW2 · Character Gallery | v1.0.4
  * TT native character-list presentation only. Never clone/rebind character
  * cards: TT owns its delegated click handlers, sort/filter and bulk actions.
  */
@@ -9,6 +9,14 @@ const HEADER_ID = 'dw2cg-header';
 const SETTINGS_ID = 'dw2cg-settings';
 const FILTER_STRIP_ID = 'dw2cg-filter-strip';
 const FILTERS_KEY = 'dw2cg:filters:open';
+const NATIVE_ACTIONS_ID = 'dw2cg-native-actions';
+const NATIVE_ACTION_IDS = Object.freeze([
+    'charListGridToggle',
+    'bulkEditButton',
+    'bulkSelectedCount',
+    'bulkSelectAllButton',
+    'bulkDeleteButton',
+]);
 let runtimeEnabled = false;
 let pendingObserver = null;
 
@@ -42,9 +50,41 @@ function renderToggle() {
     if (checkbox) checkbox.checked = active;
 }
 
+
+/* TT binds these native button events directly. Move real nodes rather than
+ * copying controls; pagination.js only rerenders its own .paginationjs child. */
+function positionNativeActions(inGallery) {
+    const pager = document.querySelector('#rm_characters_block #rm_print_characters_pagination');
+    if (!pager) return false;
+    const nodes = NATIVE_ACTION_IDS.map(id => document.getElementById(id)).filter(Boolean);
+    if (nodes.length !== NATIVE_ACTION_IDS.length) return false;
+
+    if (inGallery) {
+        const tagControls = document.querySelector('#rm_characters_block #charListFixedTop > .rm_tag_controls');
+        const nativeFilter = tagControls?.querySelector(':scope > .rm_tag_filter');
+        if (!nativeFilter) return false;
+        let holder = document.getElementById(NATIVE_ACTIONS_ID);
+        if (!holder) {
+            holder = document.createElement('div');
+            holder.id = NATIVE_ACTIONS_ID;
+            holder.setAttribute('aria-label', '角色显示与批量整理');
+            nativeFilter.after(holder);
+        }
+        for (const node of nodes) {
+            if (node.parentElement !== holder) holder.append(node);
+        }
+    } else {
+        const anchor = pager.querySelector(':scope > .paginationjs');
+        for (const node of nodes) pager.insertBefore(node, anchor);
+        document.getElementById(NATIVE_ACTIONS_ID)?.remove();
+    }
+    return true;
+}
+
 function applyMode(value) {
     if (!runtimeEnabled || !document.body) return;
     document.body.classList.toggle(ROOT_CLASS, Boolean(value));
+    positionNativeActions(Boolean(value));
     renderToggle();
 }
 
@@ -116,7 +156,10 @@ function mountFilterStrip() {
     const top = document.querySelector('#rm_characters_block #charListFixedTop');
     const controls = top?.querySelector(':scope > .rm_tag_controls');
     if (!top || !controls || !runtimeEnabled) return false;
-    if (document.getElementById(FILTER_STRIP_ID)) return true;
+    if (document.getElementById(FILTER_STRIP_ID)) {
+        if (document.body.classList.contains(ROOT_CLASS)) positionNativeActions(true);
+        return true;
+    }
     const strip = document.createElement('div');
     strip.id = FILTER_STRIP_ID;
     const caption = document.createElement('span');
@@ -144,6 +187,7 @@ function mountFilterStrip() {
     // Never move or clone TT's actual filters; keep its rerender/event contract.
     controls.before(strip);
     syncFilterStrip(readFilterOpen());
+    if (document.body.classList.contains(ROOT_CLASS)) positionNativeActions(true);
     return true;
 }
 
@@ -194,7 +238,7 @@ function mountSettings() {
     content.className = 'inline-drawer-content';
     const status = document.createElement('p');
     status.className = 'dw2cg-settings-note';
-    status.textContent = '已加载 · v1.0.3 · DW2 独立视觉';
+    status.textContent = '已加载 · v1.0.4 · DW2 独立视觉';
     const option = document.createElement('label');
     option.className = 'checkbox_label dw2cg-settings-option';
     const checkbox = document.createElement('input');
@@ -210,7 +254,7 @@ function mountSettings() {
     option.append(checkbox, desc);
     const guide = document.createElement('p');
     guide.className = 'dw2cg-settings-note';
-    guide.textContent = '三列封面 · 底部翻页 · 筛选横向收纳 · 保留原生管理';
+    guide.textContent = '三列封面 · 极简分页 · 原生管理统一收纳';
     content.append(status, option, guide);
     drawer.append(heading, content);
     panel.append(drawer);
@@ -246,6 +290,7 @@ export function onDisable() {
     runtimeEnabled = false;
     pendingObserver?.disconnect();
     pendingObserver = null;
+    positionNativeActions(false);
     document.body?.classList.remove(ROOT_CLASS);
     document.getElementById(HEADER_ID)?.remove();
     document.getElementById(FILTER_STRIP_ID)?.remove();

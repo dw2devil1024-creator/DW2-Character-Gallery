@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 
-/* DW2 · Character Gallery | v1.0.3
+/* DW2 · Character Gallery | v1.0.4
    Scope: TT native character-list panel only.
    Preserve native DOM, delegated click handlers and source thumbnails.
    Same visual tokens as DW2 · Story Archive, without theme binding. */
@@ -233,20 +233,21 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_pagination {
     order: 3 !important;
     flex: 0 0 auto !important;
     display: flex !important;
-    flex-wrap: wrap !important;
+    flex-wrap: nowrap !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 3px 5px !important;
-    min-height: 32px !important;
+    min-height: 30px !important;
     height: auto !important;
     margin: 0 8px 0 !important;
-    padding: 3px 0 4px !important;
+    padding: 2px 0 !important;
     border: 0 !important;
     border-radius: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
     color: var(--dw2cg-muted);
     font: 11px/1.4 var(--dw2cg-font) !important;
+    transform: translateY(6px);
 }
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination :is(
     .paginationjs-nav, .paginationjs-size-changer
@@ -274,14 +275,21 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .menu_but
     background: transparent !important;
     box-shadow: none !important;
 }
-body.dw2cg-active #rm_characters_block #rm_print_characters_pagination :is(
-    .paginationjs-size-changer select, .paginationjs-pages li a
-) {
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-pages li a {
     border: 1px solid var(--dw2cg-line) !important;
     border-radius: 4px !important;
-    background: rgba(34,29,27,.2) !important;
+    background: rgba(34,29,27,.16) !important;
     color: var(--dw2cg-ink) !important;
     box-shadow: none !important;
+}
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-size-changer select {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    color: var(--dw2cg-muted) !important;
 }
 /* Native per-page select: compact like its neighboring page arrows. */
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-size-changer select {
@@ -289,24 +297,62 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginati
     box-sizing: border-box !important;
     width: auto !important;
     min-width: 0 !important;
-    max-width: 92px !important;
-    height: 30px !important;
-    min-height: 30px !important;
+    max-width: 96px !important;
+    height: 28px !important;
+    min-height: 28px !important;
     margin: 0 !important;
-    padding: 2px 18px 2px 8px !important;
+    padding: 2px 16px 2px 6px !important;
     font: 500 11px/1.35 var(--dw2cg-font) !important;
-    text-align: left !important;
+    text-align: center !important;
 }
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-size-changer {
+    position: relative;
     display: inline-flex;
     align-items: center;
     flex: 0 0 auto;
     min-width: 0;
 }
-body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-nav {
-    padding: 0 3px !important;
-    font-size: 10.5px !important;
-    white-space: nowrap;
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-size-changer::after {
+    content: '⌄';
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-58%);
+    font: 15px/1 system-ui,-apple-system,sans-serif;
+    color: var(--dw2cg-muted);
+    pointer-events: none;
+}
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-size-changer select:focus-visible {
+    outline: 1px solid var(--dw2cg-accent) !important;
+    outline-offset: 2px;
+}
+/* Hide only pagination.js's redundant range, never bulk-select counts. */
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs > .paginationjs-nav {
+    display: none !important;
+}
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-width: 0;
+}
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-pages ul {
+    display: flex;
+    align-items: center;
+    gap: 4px !important;
+    margin: 0 !important;
+}
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-pages li a {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0 !important;
+    font-size: 12px;
 }
 
 /* Native list toggle remains authoritative. Gallery cards only in TT grid mode. */
@@ -640,4 +686,41 @@ body.dw2cg-active #rm_characters_block #dw2cg-filter-toggle:focus-visible {
         background: var(--dw2cg-rose);
         box-shadow: 0 0 6px rgba(255,228,225,.3);
     }
+}
+
+/* Native TT gallery/list, bulk-edit, select-all and delete controls.
+   The actual clickable nodes are moved into the existing filter section. */
+#rm_characters_block #dw2cg-native-actions { display: none; }
+body.dw2cg-active #rm_characters_block #charListFixedTop.dw2cg-filters-open #dw2cg-native-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 6px;
+    min-height: 33px;
+    padding: 3px 6px 4px;
+    border-top: 1px solid var(--dw2cg-faint);
+    color: var(--dw2cg-muted);
+}
+/* Do not force display: TT uses .hide() on bulk controls in normal mode. */
+body.dw2cg-active #rm_characters_block #dw2cg-native-actions > .menu_button {
+    width: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 5px !important;
+    margin: 0 !important;
+    border: 1px solid var(--dw2cg-line) !important;
+    border-radius: 5px !important;
+    background: rgba(34,29,27,.24) !important;
+    box-shadow: none !important;
+    font-family: 'Font Awesome 6 Free' !important;
+    font-weight: 900 !important;
+    color: var(--dw2cg-accent) !important;
+    text-shadow: none !important;
+    text-align: center;
+}
+body.dw2cg-active #rm_characters_block #dw2cg-native-actions > .paginationjs-nav {
+    color: var(--dw2cg-muted);
+    font: 500 11px/1.5 var(--dw2cg-font) !important;
 }
