@@ -1,5 +1,5 @@
 /*
- * DW2 · Character Gallery | v1.0.4
+ * DW2 · Character Gallery | v1.0.5
  * TT native character-list presentation only. Never clone/rebind character
  * cards: TT owns its delegated click handlers, sort/filter and bulk actions.
  */
@@ -10,6 +10,16 @@ const SETTINGS_ID = 'dw2cg-settings';
 const FILTER_STRIP_ID = 'dw2cg-filter-strip';
 const FILTERS_KEY = 'dw2cg:filters:open';
 const NATIVE_ACTIONS_ID = 'dw2cg-native-actions';
+const QUICK_ACTIONS_ID = 'dw2cg-quick-actions';
+const ACTION_ROW_ID = 'dw2cg-action-row';
+const HEADER_ACTIONS_ID = 'dw2cg-header-actions';
+const QUICK_ACTION_IDS = Object.freeze([
+    'rm_button_create', 'character_import_button',
+    'external_import_button', 'rm_button_group_chats', 'rm_buttons_container'
+]);
+const BUILD_VERSION = '1.0.5';
+let checkedUpdate = null;
+let updateBusy = false;
 const NATIVE_ACTION_IDS = Object.freeze([
     'charListGridToggle',
     'bulkEditButton',
@@ -81,10 +91,71 @@ function positionNativeActions(inGallery) {
     return true;
 }
 
+
+/* Leave original controls intact. Search, import and sort all use TT's
+ * existing listeners, so the actual DOM nodes are relocated, never copied. */
+function positionGalleryToolbar(active) {
+    const top = document.querySelector('#rm_characters_block #charListFixedTop');
+    const header = document.getElementById(HEADER_ID);
+    const bar = document.getElementById('rm_button_bar');
+    const strip = document.getElementById(FILTER_STRIP_ID);
+    const searchForm = document.getElementById('form_character_search_form');
+    const tagControls = top?.querySelector(':scope > .rm_tag_controls');
+    const search = document.getElementById('rm_button_search');
+    const sort = document.getElementById('character_sort_order');
+    if (!top || !bar || !search || !sort || !searchForm || !tagControls) return false;
+    const buttons = QUICK_ACTION_IDS.map(id => document.getElementById(id));
+    if (buttons.some(b => !b)) return false;
+    if (active) {
+        if (!header || !strip) return false;
+        let actions = document.getElementById(HEADER_ACTIONS_ID);
+        if (!actions) {
+            actions = document.createElement('div');
+            actions.id = HEADER_ACTIONS_ID;
+            header.append(actions);
+        }
+        actions.append(search);
+        actions.append(document.getElementById('dw2cg-toggle'));
+        let row = document.getElementById(ACTION_ROW_ID);
+        if (!row) {
+            row = document.createElement('div');
+            row.id = ACTION_ROW_ID;
+            header.after(row);
+        }
+        row.append(bar, strip);
+        let quick = document.getElementById(QUICK_ACTIONS_ID);
+        if (!quick) {
+            quick = document.createElement('div');
+            quick.id = QUICK_ACTIONS_ID;
+            quick.setAttribute('aria-label', '新建、导入和群聊');
+            tagControls.append(quick);
+        }
+        for (const button of buttons) if (button.parentElement !== quick) quick.append(button);
+    } else {
+        // Restore native order: creation/import controls, sorting, search.
+        for (const button of buttons) bar.insertBefore(button, sort);
+        bar.append(search);
+        top.insertBefore(bar, searchForm);
+        if (strip) top.insertBefore(strip, tagControls);
+        document.getElementById(QUICK_ACTIONS_ID)?.remove();
+        document.getElementById(ACTION_ROW_ID)?.remove();
+        document.getElementById(HEADER_ACTIONS_ID)?.remove();
+        const toggle = document.getElementById('dw2cg-toggle');
+        if (toggle && header) header.append(toggle);
+    }
+    return true;
+}
+
 function applyMode(value) {
     if (!runtimeEnabled || !document.body) return;
     document.body.classList.toggle(ROOT_CLASS, Boolean(value));
-    positionNativeActions(Boolean(value));
+    if (value) {
+        positionNativeActions(true);
+        positionGalleryToolbar(true);
+    } else {
+        positionGalleryToolbar(false);
+        positionNativeActions(false);
+    }
     renderToggle();
 }
 
@@ -157,7 +228,10 @@ function mountFilterStrip() {
     const controls = top?.querySelector(':scope > .rm_tag_controls');
     if (!top || !controls || !runtimeEnabled) return false;
     if (document.getElementById(FILTER_STRIP_ID)) {
-        if (document.body.classList.contains(ROOT_CLASS)) positionNativeActions(true);
+        if (document.body.classList.contains(ROOT_CLASS)) {
+            positionNativeActions(true);
+            positionGalleryToolbar(true);
+        }
         return true;
     }
     const strip = document.createElement('div');
@@ -187,8 +261,125 @@ function mountFilterStrip() {
     // Never move or clone TT's actual filters; keep its rerender/event contract.
     controls.before(strip);
     syncFilterStrip(readFilterOpen());
-    if (document.body.classList.contains(ROOT_CLASS)) positionNativeActions(true);
+    if (document.body.classList.contains(ROOT_CLASS)) {
+        positionNativeActions(true);
+        positionGalleryToolbar(true);
+    }
     return true;
+}
+
+
+async function galleryApi(route, input, method = 'POST') {
+    const appRoot = new URL('../../../../', import.meta.url);
+    const { getRequestHeaders } = await import(new URL('script.js', appRoot).href);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+        const res = await fetch(new URL('api/extensions/' + route, appRoot).href, {
+            method,
+            headers: getRequestHeaders(),
+            ...(method === 'POST' ? { body: JSON.stringify(input) } : {}),
+            cache: 'no-store',
+            signal: controller.signal,
+        });
+        if (!res.ok) throw new Error('TT 扩展接口错误（' + res.status + '）：' + String(await res.text()).slice(0, 180));
+        return await res.json();
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+async function resolveGalleryInstall() {
+    const path = new URL(import.meta.url).pathname;
+    const match = path.match(/\/scripts\/extensions\/third-party\/([^/]+)\//);
+    if (!match) throw new Error('没有找到第三方扩展安装目录，无法执行仓库更新。');
+    const name = decodeURIComponent(match[1]);
+    const installed = await galleryApi('discover', null, 'GET');
+    const entry = Array.isArray(installed) && installed.find(item =>
+        String(item.name).toLowerCase() === ('third-party/' + name).toLowerCase()
+        && ['global', 'local'].includes(item.type)
+    );
+    if (!entry) throw new Error('未找到当前扩展，请在「管理扩展」确认安装位置。');
+    const info = await galleryApi('version', { extensionName: name, global: entry.type === 'global' });
+    if (!info?.remoteUrl || !info.currentCommitHash) {
+        throw new Error('当前不是 Git 仓库安装的扩展，无法在线更新。');
+    }
+    return { name, global: entry.type === 'global', info };
+}
+
+function installUpdateControls(content) {
+    const actions = document.createElement('div');
+    actions.className = 'dw2cg-settings-actions';
+    const check = document.createElement('button');
+    check.type = 'button';
+    check.className = 'dw2cg-settings-button';
+    check.textContent = '检查更新';
+    const apply = document.createElement('button');
+    apply.type = 'button';
+    apply.className = 'dw2cg-settings-button';
+    apply.textContent = '更新到最新版';
+    apply.disabled = true;
+    const status = document.createElement('p');
+    status.className = 'dw2cg-settings-status';
+    status.setAttribute('role','status');
+    status.textContent = '需要时手动检测，不会自动更新。';
+    const reload = document.createElement('button');
+    reload.type = 'button';
+    reload.className = 'dw2cg-settings-button dw2cg-settings-reload';
+    reload.textContent = '刷新酒馆';
+    reload.hidden = true;
+
+    const busy = state => {
+        updateBusy = Boolean(state);
+        check.disabled = updateBusy;
+        apply.disabled = updateBusy || !checkedUpdate;
+        reload.disabled = updateBusy;
+    };
+    const notify = message => { status.textContent = message; };
+
+    check.addEventListener('click', async () => {
+        if (updateBusy) return;
+        checkedUpdate = null;
+        busy(true);
+        notify('正在通过 TT 检查 Git 仓库更新…');
+        try {
+            const install = await resolveGalleryInstall();
+            if (install.info.isUpToDate === true && install.info.currentBranchName === 'main') {
+                notify('当前已是最新版（v' + BUILD_VERSION + '），无需更新。');
+            } else if (install.info.isUpToDate === false || install.info.currentBranchName !== 'main') {
+                checkedUpdate = { name: install.name, global: install.global };
+                notify('检测到仓库新提交，可以点击「更新到最新版」。');
+            } else {
+                notify('酒馆未返回确定的更新状态，请在扩展管理中检查。');
+            }
+        } catch (error) {
+            notify('检查失败：' + (error.message || String(error)));
+        } finally { busy(false); }
+    });
+
+    apply.addEventListener('click', async () => {
+        if (updateBusy || !checkedUpdate) return;
+        if (!window.confirm('确认通过 TT 更新 DW2 · Character Gallery？更新后需要刷新酒馆。')) return;
+        const target = checkedUpdate;
+        busy(true);
+        notify('正在更新仓库，请稍候…');
+        try {
+            const result = await galleryApi('update', { extensionName: target.name, global: target.global });
+            checkedUpdate = null;
+            if (result.isUpToDate) {
+                notify('仓库已经是最新版，无需重复更新。');
+            } else {
+                notify('更新成功' + (result.shortCommitHash ? ' · ' + result.shortCommitHash : '') + '，请点击「刷新酒馆」启用新版。');
+                reload.hidden = false;
+            }
+        } catch (error) {
+            checkedUpdate = null;
+            notify('更新失败：' + (error.message || String(error)) + '。请核实权限及网络。');
+        } finally { busy(false); }
+    });
+    reload.addEventListener('click', () => window.location.reload());
+    actions.append(check, apply);
+    content.append(actions, reload, status);
 }
 
 function mountSettings() {
@@ -238,7 +429,7 @@ function mountSettings() {
     content.className = 'inline-drawer-content';
     const status = document.createElement('p');
     status.className = 'dw2cg-settings-note';
-    status.textContent = '已加载 · v1.0.4 · DW2 独立视觉';
+    status.textContent = '已加载 · v1.0.5 · DW2 独立视觉';
     const option = document.createElement('label');
     option.className = 'checkbox_label dw2cg-settings-option';
     const checkbox = document.createElement('input');
@@ -254,8 +445,10 @@ function mountSettings() {
     option.append(checkbox, desc);
     const guide = document.createElement('p');
     guide.className = 'dw2cg-settings-note';
-    guide.textContent = '三列封面 · 极简分页 · 原生管理统一收纳';
-    content.append(status, option, guide);
+    guide.textContent = '三列画廊 · 横向收纳 · 原生交互';
+    content.append(status, option);
+    installUpdateControls(content);
+    content.append(guide);
     drawer.append(heading, content);
     panel.append(drawer);
     host.append(panel);
@@ -290,6 +483,7 @@ export function onDisable() {
     runtimeEnabled = false;
     pendingObserver?.disconnect();
     pendingObserver = null;
+    positionGalleryToolbar(false);
     positionNativeActions(false);
     document.body?.classList.remove(ROOT_CLASS);
     document.getElementById(HEADER_ID)?.remove();

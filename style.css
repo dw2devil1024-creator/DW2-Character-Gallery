@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 
-/* DW2 · Character Gallery | v1.0.4
+/* DW2 · Character Gallery | v1.0.5
    Scope: TT native character-list panel only.
    Preserve native DOM, delegated click handlers and source thumbnails.
    Same visual tokens as DW2 · Story Archive, without theme binding. */
@@ -17,7 +17,7 @@
     --dw2cg-font: 'Noto Serif SC','Songti SC','STSong','Source Han Serif SC',serif;
 }
 
-/* Own header only; do not reposition any native TT control by JS. */
+/* All TT button nodes remain original and are restored when Gallery mode ends. */
 #rm_characters_block #dw2cg-header {
     display: flex;
     align-items: end;
@@ -96,15 +96,17 @@ body.dw2cg-active #rm_characters_block #charListFixedTop {
 }
 body.dw2cg-active #rm_characters_block #rm_button_bar {
     display: flex !important;
-    flex-wrap: wrap !important;
+    flex: 1 1 0 !important;
+    flex-wrap: nowrap !important;
     align-items: center !important;
-    gap: 5px 7px !important;
+    width: 0;
     min-width: 0;
-    margin: 10px 0 8px !important;
-    padding: 5px 6px !important;
-    border: 1px solid var(--dw2cg-faint);
-    border-radius: 6px;
-    background: rgba(255,255,255,.018);
+    gap: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
 body.dw2cg-active #rm_characters_block #rm_buttons_container {
     display: inline-flex;
@@ -176,34 +178,40 @@ body.dw2cg-active #rm_characters_block #character_search_bar::placeholder {
     opacity: 1;
 }
 body.dw2cg-active #rm_characters_block #charListFixedTop > .rm_tag_controls {
+    display: grid !important;
+    grid-template-columns: minmax(0,1fr) auto minmax(0,124px);
+    align-items: center;
+    gap: 2px;
     max-width: 100%;
     min-width: 0;
-    color: var(--dw2cg-muted);
-    display: flex !important;
-    flex-direction: column !important;
-    flex-wrap: nowrap !important;
-    align-items: stretch;
-    gap: 4px;
-    margin: 3px 4px 0 !important;
+    margin: 1px 4px 2px !important;
+    padding: 2px 0;
     max-height: none;
     overflow: visible;
+    color: var(--dw2cg-muted);
+}
+body.dw2cg-active #rm_characters_block #charListFixedTop:not(.dw2cg-filters-open)
+    > .rm_tag_controls:not(:has(.rm_tag_bogus_drilldown > .tag)) {
+    display: none !important;
 }
 body.dw2cg-active #rm_characters_block #charListFixedTop > .rm_tag_controls > .rm_tag_filter {
     display: flex;
+    grid-row: 1;
+    grid-column: 1;
     flex-wrap: nowrap !important;
     align-items: center;
     gap: 4px;
-    width: 100%;
     max-width: 100%;
+    width: 100%;
     min-width: 0;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    padding: 7px 5px 8px;
-    border: 1px solid var(--dw2cg-faint);
-    border-radius: 6px;
-    background: rgba(34,29,27,.26);
+    scrollbar-width: none;
+    padding: 3px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
 }
 body.dw2cg-active #rm_characters_block #charListFixedTop > .rm_tag_controls > .rm_tag_filter > .tag {
     flex: 0 0 auto;
@@ -213,15 +221,16 @@ body.dw2cg-active #rm_characters_block #charListFixedTop > .rm_tag_controls > .r
 }
 body.dw2cg-active #rm_characters_block #charListFixedTop > .rm_tag_controls > .rm_tag_bogus_drilldown:not(:empty) {
     display: flex !important;
+    grid-row: 2;
+    grid-column: 1 / -1;
     align-items: center;
     flex-wrap: nowrap;
     gap: 3px;
-    height: auto;
-    min-height: 30px;
+    min-height: 27px;
     max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 4px 6px;
+    padding: 3px 4px;
 }
 body.dw2cg-active #rm_characters_block #charListFixedTop:not(.dw2cg-filters-open)
     > .rm_tag_controls > .rm_tag_filter {
@@ -323,8 +332,10 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginati
     pointer-events: none;
 }
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-size-changer select:focus-visible {
-    outline: 1px solid var(--dw2cg-accent) !important;
-    outline-offset: 2px;
+    outline: none !important;
+    box-shadow: none !important;
+    text-decoration: underline;
+    text-decoration-color: var(--dw2cg-accent);
 }
 /* Hide only pagination.js's redundant range, never bulk-select counts. */
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs > .paginationjs-nav {
@@ -586,7 +597,7 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_block {
     line-height: 1.55;
 }
 #dw2cg-settings .dw2cg-settings-heading b {
-    font: 600 17px/1.5 'Noto Serif SC','Songti SC','STSong',serif !important;
+    font: 600 15px/1.5 'Noto Serif SC','Songti SC','STSong',serif !important;
     letter-spacing: .035em;
     color: var(--dw2cg-settings-ink);
 }
@@ -615,23 +626,17 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_block {
 #rm_characters_block #dw2cg-filter-strip { display: none; }
 body.dw2cg-active #rm_characters_block #dw2cg-filter-strip {
     display: flex;
-    justify-content: space-between;
+    flex: 0 0 auto;
+    justify-content: center;
     align-items: center;
-    gap: 8px;
-    margin: 5px 4px 1px;
-    padding: 4px 1px 5px;
-    border-bottom: 1px solid var(--dw2cg-faint);
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
     min-width: 0;
     font-family: var(--dw2cg-font) !important;
 }
-body.dw2cg-active #rm_characters_block .dw2cg-filter-caption {
-    color: var(--dw2cg-muted);
-    font: 500 9px/1.5 var(--dw2cg-font) !important;
-    letter-spacing: .14em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+body.dw2cg-active #rm_characters_block .dw2cg-filter-caption { display: none; }
 body.dw2cg-active #rm_characters_block #dw2cg-filter-toggle {
     display: inline-flex;
     align-items: center;
@@ -693,26 +698,31 @@ body.dw2cg-active #rm_characters_block #dw2cg-filter-toggle:focus-visible {
 #rm_characters_block #dw2cg-native-actions { display: none; }
 body.dw2cg-active #rm_characters_block #charListFixedTop.dw2cg-filters-open #dw2cg-native-actions {
     display: flex;
-    flex: 0 0 auto;
+    grid-row: 1;
+    grid-column: 2;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     flex-wrap: nowrap;
-    gap: 6px;
-    min-height: 33px;
-    padding: 3px 6px 4px;
-    border-top: 1px solid var(--dw2cg-faint);
+    gap: 2px;
+    max-width: 105px;
+    min-width: 0;
+    min-height: 29px;
+    padding: 0;
+    border: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
     color: var(--dw2cg-muted);
 }
 /* Do not force display: TT uses .hide() on bulk controls in normal mode. */
 body.dw2cg-active #rm_characters_block #dw2cg-native-actions > .menu_button {
-    width: 32px;
-    min-width: 32px;
-    min-height: 32px;
-    padding: 5px !important;
+    width: 28px;
+    min-width: 28px;
+    min-height: 29px;
+    padding: 4px !important;
     margin: 0 !important;
-    border: 1px solid var(--dw2cg-line) !important;
+    border: 0 !important;
     border-radius: 5px !important;
-    background: rgba(34,29,27,.24) !important;
+    background: transparent !important;
     box-shadow: none !important;
     font-family: 'Font Awesome 6 Free' !important;
     font-weight: 900 !important;
@@ -723,4 +733,173 @@ body.dw2cg-active #rm_characters_block #dw2cg-native-actions > .menu_button {
 body.dw2cg-active #rm_characters_block #dw2cg-native-actions > .paginationjs-nav {
     color: var(--dw2cg-muted);
     font: 500 11px/1.5 var(--dw2cg-font) !important;
+}
+
+/* v1.0.5 unified toolbar, search button beside the gallery title. */
+body.dw2cg-active #rm_characters_block #dw2cg-action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: calc(100% - 8px);
+    min-width: 0;
+    gap: 8px;
+    margin: 8px 4px 4px;
+    padding: 0;
+}
+body.dw2cg-active #rm_characters_block #dw2cg-action-row #character_sort_order {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    margin: 0 !important;
+    padding: 5px 23px 5px 10px !important;
+    font-size: 12px !important;
+}
+body.dw2cg-active #rm_characters_block #dw2cg-action-row #dw2cg-filter-strip { margin: 0 !important; padding: 0 !important; }
+body.dw2cg-active #rm_characters_block #dw2cg-action-row #dw2cg-filter-toggle {
+    flex: 0 0 auto;
+    min-width: 143px;
+    height: 36px;
+    min-height: 36px;
+    padding: 5px 9px !important;
+    font-size: 12px !important;
+}
+body.dw2cg-active #rm_characters_block #dw2cg-header {
+    align-items: center;
+    gap: 5px;
+    padding: 5px 5px 9px;
+}
+body.dw2cg-active #rm_characters_block #dw2cg-header-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    min-width: 0;
+}
+body.dw2cg-active #rm_characters_block #dw2cg-header-actions #rm_button_search {
+    display: inline-flex !important;
+    flex: 0 0 32px;
+    align-items: center;
+    justify-content: center;
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 35px !important;
+    min-height: 35px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 5px;
+    background: transparent !important;
+    color: var(--dw2cg-accent) !important;
+    font-family: 'Font Awesome 6 Free' !important;
+    font-weight: 900 !important;
+    font-size: 14px !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+body.dw2cg-active #rm_characters_block #dw2cg-header-actions #rm_button_search.active {
+    background: rgba(191,217,229,.065) !important;
+}
+body.dw2cg-active #rm_characters_block #form_character_search_form {
+    margin: 4px 4px 3px !important;
+}
+body.dw2cg-active #rm_characters_block #character_search_bar {
+    min-height: 35px;
+    padding: 6px 10px !important;
+}
+#rm_characters_block #dw2cg-quick-actions { display: none; }
+body.dw2cg-active #rm_characters_block #charListFixedTop.dw2cg-filters-open #dw2cg-quick-actions {
+    display: flex;
+    grid-row: 1;
+    grid-column: 3;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    gap: 2px;
+    min-width: 0;
+    max-width: 124px;
+    min-height: 29px;
+    padding: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+body.dw2cg-active #rm_characters_block #dw2cg-quick-actions > :is(.menu_button,.right_menu_button) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 28px;
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 29px !important;
+    min-height: 29px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 5px !important;
+    background: transparent !important;
+    color: var(--dw2cg-muted) !important;
+    font-size: 14px !important;
+    box-shadow: none !important;
+}
+body.dw2cg-active #rm_characters_block #dw2cg-quick-actions #rm_buttons_container {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 3px;
+}
+body.dw2cg-active #rm_characters_block #charListFixedTop:not(.dw2cg-filters-open) #dw2cg-quick-actions { display: none !important; }
+/* Remove unnecessary fixed-top gap so gallery cards move upward. */
+body.dw2cg-active #rm_characters_block #rm_print_characters_block {
+    padding-top: 7px !important;
+}
+/* DW2-family extension settings typography, plus native update controls. */
+#extensions_settings2 #dw2cg-settings .inline-drawer-header .dw2cg-settings-heading > b,
+#extensions_settings #dw2cg-settings .inline-drawer-header .dw2cg-settings-heading > b {
+    font-size: 15px !important;
+    line-height: 1.45 !important;
+    font-weight: 600 !important;
+}
+#dw2cg-settings .dw2cg-settings-credit { font-size: 10px !important; }
+#dw2cg-settings .dw2cg-settings-actions {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 7px;
+    margin: 9px 0 7px;
+    width: 100%;
+}
+#dw2cg-settings .dw2cg-settings-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 35px;
+    width: 100%;
+    margin: 0;
+    padding: 6px 8px;
+    border: 1px solid rgba(238,226,216,.17);
+    border-radius: 5px;
+    background: rgba(255,255,255,.035);
+    color: rgba(243,236,231,.9);
+    font: 500 12px/1.4 'Noto Serif SC','Songti SC','STSong',serif !important;
+    box-shadow: none;
+    text-shadow: none;
+    cursor: pointer;
+}
+#dw2cg-settings .dw2cg-settings-button:disabled { opacity: .45; cursor: default; }
+#dw2cg-settings .dw2cg-settings-reload { width: 100%; margin-top: 2px; }
+#dw2cg-settings .dw2cg-settings-reload[hidden] { display: none !important; }
+#dw2cg-settings .dw2cg-settings-status {
+    font: 400 11px/1.7 'Noto Serif SC','Songti SC','STSong',serif !important;
+    color: rgba(229,219,212,.65);
+    margin: 6px 0;
+    white-space: pre-wrap;
+}
+@media (max-width: 380px) {
+    body.dw2cg-active #rm_characters_block #dw2cg-action-row #dw2cg-filter-toggle {
+        min-width: 125px;
+        padding: 5px 7px !important;
+    }
 }
