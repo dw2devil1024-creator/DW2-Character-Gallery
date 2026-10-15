@@ -1,5 +1,5 @@
 /*
- * DW2 · Character Gallery | v1.0.2
+ * DW2 · Character Gallery | v1.0.3
  * TT native character-list presentation only. Never clone/rebind character
  * cards: TT owns its delegated click handlers, sort/filter and bulk actions.
  */
@@ -194,7 +194,7 @@ function mountSettings() {
     content.className = 'inline-drawer-content';
     const status = document.createElement('p');
     status.className = 'dw2cg-settings-note';
-    status.textContent = '已加载 · v1.0.2 · DW2 独立视觉';
+    status.textContent = '已加载 · v1.0.3 · DW2 独立视觉';
     const option = document.createElement('label');
     option.className = 'checkbox_label dw2cg-settings-option';
     const checkbox = document.createElement('input');

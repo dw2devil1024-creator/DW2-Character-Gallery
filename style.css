@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 
-/* DW2 · Character Gallery | v1.0.2
+/* DW2 · Character Gallery | v1.0.3
    Scope: TT native character-list panel only.
    Preserve native DOM, delegated click handlers and source thumbnails.
    Same visual tokens as DW2 · Story Archive, without theme binding. */
@@ -227,23 +227,26 @@ body.dw2cg-active #rm_characters_block #charListFixedTop:not(.dw2cg-filters-open
     > .rm_tag_controls > .rm_tag_filter {
     display: none !important;
 }
+/* The panel already handles mobile safe-area insets; keep this footer
+   compact, transparent, and in native flex order after the scrolling grid. */
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination {
     order: 3 !important;
     flex: 0 0 auto !important;
-    position: relative;
-    z-index: 2;
     display: flex !important;
     flex-wrap: wrap !important;
     align-items: center !important;
-    gap: 5px 8px !important;
-    min-height: 38px;
-    margin: 2px 8px 3px !important;
-    padding: 5px 0 8px !important;
-    border-top: 1px solid var(--dw2cg-faint);
-    border-bottom: 0;
-    background: var(--dw2cg-panel);
+    justify-content: center !important;
+    gap: 3px 5px !important;
+    min-height: 32px !important;
+    height: auto !important;
+    margin: 0 8px 0 !important;
+    padding: 3px 0 4px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
     color: var(--dw2cg-muted);
-    font: 11px/1.5 var(--dw2cg-font) !important;
+    font: 11px/1.4 var(--dw2cg-font) !important;
 }
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination :is(
     .paginationjs-nav, .paginationjs-size-changer
@@ -276,9 +279,34 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_pagination :is(
 ) {
     border: 1px solid var(--dw2cg-line) !important;
     border-radius: 4px !important;
-    background: var(--dw2cg-panel) !important;
+    background: rgba(34,29,27,.2) !important;
     color: var(--dw2cg-ink) !important;
     box-shadow: none !important;
+}
+/* Native per-page select: compact like its neighboring page arrows. */
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-size-changer select {
+    display: block !important;
+    box-sizing: border-box !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 92px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    margin: 0 !important;
+    padding: 2px 18px 2px 8px !important;
+    font: 500 11px/1.35 var(--dw2cg-font) !important;
+    text-align: left !important;
+}
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-size-changer {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    min-width: 0;
+}
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-nav {
+    padding: 0 3px !important;
+    font-size: 10.5px !important;
+    white-space: nowrap;
 }
 
 /* Native list toggle remains authoritative. Gallery cards only in TT grid mode. */
@@ -493,9 +521,7 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_block {
     min-height: 0 !important;
     height: auto !important;
 }
-body.dw2cg-active #rm_characters_block #rm_print_characters_pagination {
-    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
-}
+/* No extra footer safe-area padding: TT already reserves mobile insets. */
 
 /* DW2 extension settings: same TT inline-drawer pattern as the bookshelf. */
 #dw2cg-settings {
