@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 
-/* DW2 · Character Gallery | v1.0.5
+/* DW2 · Character Gallery | v1.0.6
    Scope: TT native character-list panel only.
    Preserve native DOM, delegated click handlers and source thumbnails.
    Same visual tokens as DW2 · Story Archive, without theme binding. */
@@ -46,36 +46,39 @@
     letter-spacing: .1em;
     color: var(--dw2cg-ink);
 }
+/* A quiet typographic view switch, just like the DW2 kicker.
+   It stays legible and clickable in both gallery AND native mode. */
 #rm_characters_block #dw2cg-toggle {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
     align-self: center;
     flex: 0 0 auto;
     min-height: 35px;
-    padding: 6px 10px !important;
+    padding: 6px 5px !important;
     margin: 0 !important;
-    border: 1px solid var(--dw2cg-line) !important;
-    border-radius: 5px !important;
-    background: var(--dw2cg-panel) !important;
-    color: var(--dw2cg-muted) !important;
+    border: 0 !important;
+    border-radius: 3px !important;
+    background: transparent !important;
     box-shadow: none !important;
+    color: rgba(229,219,212,.7) !important;
     text-shadow: none !important;
-    font: 500 11px/1.4 var(--dw2cg-font) !important;
+    font: 500 10px/1.4 var(--dw2cg-font) !important;
+    letter-spacing: .11em !important;
+    white-space: nowrap;
     cursor: pointer;
 }
 #rm_characters_block #dw2cg-toggle[aria-pressed="true"] {
-    color: var(--dw2cg-ink) !important;
-    border-color: rgba(191,217,229,.3) !important;
+    color: rgba(243,236,231,.82) !important;
 }
-#rm_characters_block #dw2cg-toggle i {
-    color: var(--dw2cg-accent);
-    font-size: 12px;
+#rm_characters_block #dw2cg-toggle:hover,
+#rm_characters_block #dw2cg-toggle:focus-visible {
+    color: var(--dw2cg-ink) !important;
+    background: rgba(191,217,229,.04) !important;
 }
 #rm_characters_block #dw2cg-toggle:focus-visible {
-    outline: 2px solid var(--dw2cg-accent);
-    outline-offset: 2px;
+    outline: 1px dotted rgba(229,219,212,.45) !important;
+    outline-offset: -2px !important;
 }
 
 /* All further changes require explicit opt-in body class. */
@@ -319,9 +322,11 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginati
     height: 28px !important;
     min-height: 28px !important;
     margin: 0 !important;
-    padding: 2px 16px 2px 6px !important;
+    padding: 2px 6px !important;
     font: 500 11px/1.35 var(--dw2cg-font) !important;
     text-align: center !important;
+    -webkit-tap-highlight-color: transparent !important;
+    text-decoration: none !important;
 }
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-size-changer {
     position: relative;
@@ -330,21 +335,20 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginati
     flex: 0 0 auto;
     min-width: 0;
 }
+/* No extra chevron, no bright blue focus line or underlined selection. The
+   real native select remains accessible and opens the same choices. */
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-size-changer::after {
-    content: '⌄';
-    position: absolute;
-    right: 2px;
-    top: 50%;
-    transform: translateY(-58%);
-    font: 15px/1 system-ui,-apple-system,sans-serif;
-    color: var(--dw2cg-muted);
-    pointer-events: none;
+    content: none !important;
+    display: none !important;
 }
-body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-size-changer select:focus-visible {
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-size-changer select:is(:focus,:focus-visible,:active),
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs-size-changer:focus-within {
     outline: none !important;
     box-shadow: none !important;
-    text-decoration: underline;
-    text-decoration-color: var(--dw2cg-accent);
+    -webkit-box-shadow: none !important;
+    text-decoration: none !important;
+    border: 0 !important;
+    background: transparent !important;
 }
 /* Hide only pagination.js's redundant range, never bulk-select counts. */
 body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .paginationjs > .paginationjs-nav {
@@ -819,6 +823,22 @@ body.dw2cg-active #rm_characters_block #character_search_bar {
     min-height: 35px;
     padding: 6px 10px !important;
 }
+body.dw2cg-active #rm_characters_block #character_search_bar:is(:focus,:focus-visible),
+body.dw2cg-active #rm_characters_block #form_character_search_form:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    border-color: rgba(238,226,216,.17) !important;
+}
+/* Form and any TT-themed input wrapper must not draw a bright focus stroke. */
+body.dw2cg-active #rm_characters_block #form_character_search_form #character_search_bar:is(:focus,:focus-visible) {
+    outline: none !important;
+    outline-offset: 0 !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    border: 1px solid rgba(238,226,216,.17) !important;
+}
+
 #rm_characters_block #dw2cg-quick-actions { display: none; }
 body.dw2cg-active #rm_characters_block #charListFixedTop.dw2cg-filters-open #dw2cg-quick-actions {
     display: flex;

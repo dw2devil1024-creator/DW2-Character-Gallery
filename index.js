@@ -1,5 +1,5 @@
 /*
- * DW2 · Character Gallery | v1.0.5
+ * DW2 · Character Gallery | v1.0.6
  * TT native character-list presentation only. Never clone/rebind character
  * cards: TT owns its delegated click handlers, sort/filter and bulk actions.
  */
@@ -17,7 +17,7 @@ const QUICK_ACTION_IDS = Object.freeze([
     'rm_button_create', 'character_import_button',
     'external_import_button', 'rm_button_group_chats', 'rm_buttons_container'
 ]);
-const BUILD_VERSION = '1.0.5';
+const BUILD_VERSION = '1.0.6';
 let checkedUpdate = null;
 let updateBusy = false;
 const NATIVE_ACTION_IDS = Object.freeze([
@@ -54,7 +54,7 @@ function renderToggle() {
         button.setAttribute('aria-label', active ? '关闭 DW2 角色画廊美化' : '启用 DW2 角色画廊美化');
         button.title = active ? '切换到 TT 原生外观' : '启用 DW2 角色画廊';
         const label = button.querySelector('.dw2cg-switch-label');
-        if (label) label.textContent = active ? '画廊模式' : '原生模式';
+        if (label) label.textContent = active ? 'GALLERY VIEW' : 'NATIVE VIEW';
     }
     const checkbox = document.getElementById('dw2cg-settings-toggle');
     if (checkbox) checkbox.checked = active;
@@ -114,8 +114,12 @@ function positionGalleryToolbar(active) {
             actions.id = HEADER_ACTIONS_ID;
             header.append(actions);
         }
+        const toggle = document.getElementById('dw2cg-toggle');
         actions.append(search);
-        actions.append(document.getElementById('dw2cg-toggle'));
+        // Never append a null value: Element.append(null) creates the literal
+        // text "null" (the 1.0.5 header regression). Keep a missing toggle
+        // recoverable instead of silently replacing it with text.
+        if (toggle) actions.append(toggle);
         let row = document.getElementById(ACTION_ROW_ID);
         if (!row) {
             row = document.createElement('div');
@@ -139,9 +143,11 @@ function positionGalleryToolbar(active) {
         if (strip) top.insertBefore(strip, tagControls);
         document.getElementById(QUICK_ACTIONS_ID)?.remove();
         document.getElementById(ACTION_ROW_ID)?.remove();
-        document.getElementById(HEADER_ACTIONS_ID)?.remove();
+        // Rescue the live mode toggle BEFORE deleting its temporary parent.
+        // v1.0.5 did this in the opposite order and destroyed the button.
         const toggle = document.getElementById('dw2cg-toggle');
         if (toggle && header) header.append(toggle);
+        document.getElementById(HEADER_ACTIONS_ID)?.remove();
     }
     return true;
 }
@@ -159,10 +165,35 @@ function applyMode(value) {
     renderToggle();
 }
 
+function createModeToggle() {
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.id = 'dw2cg-toggle';
+    toggle.className = 'dw2cg-switch';
+    const text = document.createElement('span');
+    text.className = 'dw2cg-switch-label';
+    toggle.append(text);
+    toggle.addEventListener('click', () => {
+        const next = !document.body.classList.contains(ROOT_CLASS);
+        setPreferredEnabled(next);
+        applyMode(next);
+    });
+    return toggle;
+}
+
 function mountHeader() {
     const panelTop = document.querySelector('#rm_characters_block #charListFixedTop');
     if (!panelTop || !runtimeEnabled) return false;
     if (document.getElementById(HEADER_ID)) {
+        const header = document.getElementById(HEADER_ID);
+        // Repair a partially switched header in-session, if another UI pass
+        // removed the toggle. Reloading v1.0.6 also starts from a clean DOM.
+        if (!document.getElementById('dw2cg-toggle')) {
+            header.append(createModeToggle());
+        }
+        for (const node of [...header.childNodes]) {
+            if (node.nodeType === 3 && node.textContent.trim() === 'null') node.remove();
+        }
         renderToggle();
         return true;
     }
@@ -180,21 +211,7 @@ function mountHeader() {
     name.textContent = '角色档案馆';
     title.append(overline, name);
 
-    const toggle = document.createElement('button');
-    toggle.type = 'button';
-    toggle.id = 'dw2cg-toggle';
-    toggle.className = 'dw2cg-switch';
-    const mark = document.createElement('i');
-    mark.className = 'fa-solid fa-images';
-    mark.setAttribute('aria-hidden', 'true');
-    const text = document.createElement('span');
-    text.className = 'dw2cg-switch-label';
-    toggle.append(mark, text);
-    toggle.addEventListener('click', () => {
-        const next = !document.body.classList.contains(ROOT_CLASS);
-        setPreferredEnabled(next);
-        applyMode(next);
-    });
+    const toggle = createModeToggle();
     header.append(title, toggle);
     panelTop.prepend(header);
     renderToggle();
@@ -429,7 +446,7 @@ function mountSettings() {
     content.className = 'inline-drawer-content';
     const status = document.createElement('p');
     status.className = 'dw2cg-settings-note';
-    status.textContent = '已加载 · v1.0.5 · DW2 独立视觉';
+    status.textContent = '已加载 · v1.0.6 · DW2 独立视觉';
     const option = document.createElement('label');
     option.className = 'checkbox_label dw2cg-settings-option';
     const checkbox = document.createElement('input');
