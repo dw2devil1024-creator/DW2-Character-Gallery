@@ -1,0 +1,418 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
+
+/* DW2 · Character Gallery | v1.0.0
+   Scope: TT native character-list panel only.
+   Preserve native DOM, delegated click handlers and source thumbnails.
+   Same visual tokens as DW2 · Story Archive, without theme binding. */
+
+#rm_characters_block {
+    --dw2cg-ink: #f3ece7;
+    --dw2cg-muted: rgba(229,219,212,.62);
+    --dw2cg-accent: #bfd9e5;
+    --dw2cg-rose: #ffe4e1;
+    --dw2cg-line: rgba(238,226,216,.14);
+    --dw2cg-faint: rgba(238,226,216,.09);
+    --dw2cg-panel: rgba(34,29,27,.48);
+    --dw2cg-inset: rgba(255,255,255,.035);
+    --dw2cg-font: 'Noto Serif SC','Songti SC','STSong','Source Han Serif SC',serif;
+}
+
+/* Own header only; do not reposition any native TT control by JS. */
+#rm_characters_block #dw2cg-header {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 7px 12px;
+    min-width: 0;
+    border-bottom: 1px solid var(--dw2cg-faint);
+    font-family: var(--dw2cg-font) !important;
+    color: var(--dw2cg-ink);
+}
+#rm_characters_block .dw2cg-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+#rm_characters_block .dw2cg-overline {
+    font: 500 9px/1.5 var(--dw2cg-font);
+    letter-spacing: .17em;
+    color: var(--dw2cg-muted);
+    white-space: nowrap;
+}
+#rm_characters_block .dw2cg-name {
+    font: 600 19px/1.45 var(--dw2cg-font);
+    letter-spacing: .1em;
+    color: var(--dw2cg-ink);
+}
+#rm_characters_block #dw2cg-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    align-self: center;
+    flex: 0 0 auto;
+    min-height: 35px;
+    padding: 6px 10px !important;
+    margin: 0 !important;
+    border: 1px solid var(--dw2cg-line) !important;
+    border-radius: 5px !important;
+    background: var(--dw2cg-panel) !important;
+    color: var(--dw2cg-muted) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    font: 500 11px/1.4 var(--dw2cg-font) !important;
+    cursor: pointer;
+}
+#rm_characters_block #dw2cg-toggle[aria-pressed="true"] {
+    color: var(--dw2cg-ink) !important;
+    border-color: rgba(191,217,229,.3) !important;
+}
+#rm_characters_block #dw2cg-toggle i {
+    color: var(--dw2cg-accent);
+    font-size: 12px;
+}
+#rm_characters_block #dw2cg-toggle:focus-visible {
+    outline: 2px solid var(--dw2cg-accent);
+    outline-offset: 2px;
+}
+
+/* All further changes require explicit opt-in body class. */
+body.dw2cg-active #rm_characters_block {
+    color: var(--dw2cg-ink);
+    font-family: var(--dw2cg-font) !important;
+}
+body.dw2cg-active #rm_characters_block :is(
+    #rm_button_bar, #form_character_search_form,
+    #rm_print_characters_pagination, .rm_tag_controls
+) {
+    font-family: var(--dw2cg-font) !important;
+}
+body.dw2cg-active #rm_characters_block #charListFixedTop {
+    flex: 0 0 auto;
+    padding: 8px 9px 0;
+    min-width: 0;
+}
+body.dw2cg-active #rm_characters_block #rm_button_bar {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 7px 8px !important;
+    min-width: 0;
+    margin: 10px 0 8px !important;
+    padding: 0 2px;
+}
+body.dw2cg-active #rm_characters_block #rm_buttons_container {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+body.dw2cg-active #rm_characters_block #rm_button_bar > :is(
+    .menu_button, .right_menu_button, #rm_button_create,
+    #character_import_button, #external_import_button,
+    #rm_button_group_chats, #rm_button_search
+) {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    flex: 0 0 34px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid transparent !important;
+    border-radius: 5px !important;
+    color: var(--dw2cg-muted) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+body.dw2cg-active #rm_characters_block #rm_button_bar > :is(
+    .menu_button, .right_menu_button, #rm_button_search
+):hover {
+    color: var(--dw2cg-ink) !important;
+    border-color: var(--dw2cg-line) !important;
+    background: var(--dw2cg-inset) !important;
+}
+body.dw2cg-active #rm_characters_block #character_sort_order {
+    flex: 1 1 125px !important;
+    width: auto !important;
+    min-width: 98px !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    min-height: 36px;
+    padding: 5px 9px !important;
+    border: 1px solid var(--dw2cg-line) !important;
+    border-radius: 5px !important;
+    background: var(--dw2cg-panel) !important;
+    color: var(--dw2cg-ink) !important;
+    font: 12px var(--dw2cg-font) !important;
+    box-shadow: none !important;
+}
+body.dw2cg-active #rm_characters_block #form_character_search_form {
+    min-width: 0;
+    margin: 1px 0 8px !important;
+}
+body.dw2cg-active #rm_characters_block #character_search_bar {
+    width: 100% !important;
+    min-height: 39px;
+    padding: 8px 12px !important;
+    border: 1px solid var(--dw2cg-line) !important;
+    border-radius: 5px !important;
+    background: var(--dw2cg-panel) !important;
+    color: var(--dw2cg-ink) !important;
+    font: 12px/1.5 var(--dw2cg-font) !important;
+    box-shadow: none !important;
+}
+body.dw2cg-active #rm_characters_block #character_search_bar::placeholder {
+    color: var(--dw2cg-muted);
+    opacity: 1;
+}
+body.dw2cg-active #rm_characters_block .rm_tag_controls {
+    max-width: 100%;
+    min-width: 0;
+    color: var(--dw2cg-muted);
+}
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 5px 8px !important;
+    min-height: 38px;
+    margin: 2px 8px 3px !important;
+    padding: 5px 0 8px !important;
+    border-bottom: 1px solid var(--dw2cg-faint);
+    color: var(--dw2cg-muted);
+    font: 11px/1.5 var(--dw2cg-font) !important;
+}
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination :is(
+    .menu_button, .paginationjs-nav, .paginationjs-size-changer,
+    .paginationjs-pages
+) {
+    color: var(--dw2cg-muted) !important;
+    font-family: var(--dw2cg-font) !important;
+}
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination .menu_button {
+    min-width: 30px;
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px !important;
+    margin: 0 !important;
+    border: 1px solid transparent !important;
+    border-radius: 4px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+body.dw2cg-active #rm_characters_block #rm_print_characters_pagination :is(
+    .paginationjs-size-changer select, .paginationjs-pages li a
+) {
+    border: 1px solid var(--dw2cg-line) !important;
+    border-radius: 4px !important;
+    background: var(--dw2cg-panel) !important;
+    color: var(--dw2cg-ink) !important;
+    box-shadow: none !important;
+}
+
+/* Native list toggle remains authoritative. Gallery cards only in TT grid mode. */
+body.dw2cg-active.charListGrid #rm_characters_block #rm_print_characters_block {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    justify-content: stretch !important;
+    justify-items: stretch;
+    align-items: start;
+    align-content: start;
+    gap: 17px 12px !important;
+    padding: 13px 12px 28px !important;
+    margin: 0 !important;
+    min-width: 0;
+    min-height: 0;
+    overscroll-behavior: contain;
+}
+body.dw2cg-active.charListGrid #rm_print_characters_block > :is(
+    .character_select, .group_select, .bogus_folder_select
+) {
+    position: relative;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 6px 6px 9px !important;
+    border: 1px solid var(--dw2cg-faint) !important;
+    border-radius: 12px !important;
+    background: rgba(34,29,27,.24) !important;
+    box-shadow: none !important;
+    color: var(--dw2cg-ink);
+    text-shadow: none !important;
+    overflow: visible;
+}
+body.dw2cg-active.charListGrid #rm_print_characters_block > :is(
+    .character_select, .group_select, .bogus_folder_select
+):hover {
+    border-color: rgba(191,217,229,.3) !important;
+    background: rgba(34,29,27,.34) !important;
+}
+body.dw2cg-active.charListGrid #rm_print_characters_block > :is(
+    .character_select, .group_select, .bogus_folder_select
+):focus-visible {
+    outline: 2px solid var(--dw2cg-accent);
+    outline-offset: 3px;
+}
+body.dw2cg-active.charListGrid #rm_print_characters_block > :is(
+    .character_select, .group_select, .bogus_folder_select
+) > .avatar {
+    position: relative;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    align-self: stretch !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    aspect-ratio: 3 / 4;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    outline: none !important;
+    background: var(--dw2cg-inset) !important;
+    overflow: hidden;
+}
+body.dw2cg-active.charListGrid #rm_print_characters_block > :is(
+    .character_select, .group_select, .bogus_folder_select
+) > .avatar img {
+    display: block;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    position: absolute;
+    inset: 0;
+    object-fit: cover !important;
+    object-position: center center !important;
+    border: none !important;
+    border-radius: inherit !important;
+    box-shadow: none !important;
+}
+body.dw2cg-active.charListGrid #rm_print_characters_block > :is(
+    .character_select, .group_select, .bogus_folder_select
+) > :is(.character_select_container, .group_select_container) {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    justify-content: center;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+body.dw2cg-active.charListGrid #rm_print_characters_block :is(
+    .character_name_block, .group_name_block
+) {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 9px 0 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 2px !important;
+}
+body.dw2cg-active.charListGrid #rm_print_characters_block :is(
+    .ch_name, .group_name_block .ch_name
+) {
+    display: block;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+    font: 600 13px/1.55 var(--dw2cg-font) !important;
+    color: var(--dw2cg-ink) !important;
+    text-shadow: none !important;
+}
+body.dw2cg-active.charListGrid #rm_print_characters_block .bogus_folder_counter,
+body.dw2cg-active.charListGrid #rm_print_characters_block .group_select_counter {
+    color: var(--dw2cg-muted) !important;
+    font: 11px/1.5 var(--dw2cg-font) !important;
+    text-align: center;
+    width: 100%;
+    max-width: none;
+}
+/* Replace TT's loud golden favorite outline with a softer paper/rose cue. */
+body.dw2cg-active.charListGrid #rm_print_characters_block > .is_fav > .avatar {
+    outline: 1px solid rgba(255,228,225,.75) !important;
+    outline-offset: -1px !important;
+}
+body.dw2cg-active.charListGrid #rm_print_characters_block > .is_fav > .avatar::after {
+    content: '✦';
+    position: absolute;
+    pointer-events: none;
+    right: 7px;
+    top: 5px;
+    color: var(--dw2cg-rose);
+    font: 14px/1 sans-serif;
+    text-shadow: 0 0 5px rgba(255,228,225,.5);
+}
+/* Keep bulk-selected visual states and click targets. */
+body.dw2cg-active.charListGrid #rm_print_characters_block > :is(
+    .character_selected, .selected
+) {
+    border-color: rgba(191,217,229,.85) !important;
+    background: rgba(191,217,229,.11) !important;
+}
+body.dw2cg-active.charListGrid #rm_print_characters_block .bulk_select_checkbox {
+    position: absolute;
+    z-index: 3;
+    top: 11px;
+    left: 11px;
+    margin: 0 !important;
+    min-width: 18px;
+    min-height: 18px;
+    accent-color: var(--dw2cg-accent);
+}
+/* Genuine disabled states are still visible. */
+body.dw2cg-active.charListGrid #rm_print_characters_block > .disabled {
+    opacity: .48;
+    cursor: not-allowed;
+}
+body.dw2cg-active #rm_characters_block :is(
+    #rm_button_bar, #rm_print_characters_pagination
+) :is(button, select, .menu_button, .right_menu_button):focus-visible,
+body.dw2cg-active #rm_characters_block #character_search_bar:focus-visible {
+    outline: 2px solid var(--dw2cg-accent) !important;
+    outline-offset: 2px;
+}
+
+/* TT character sidebar is narrow on desktop too; never use viewport-width
+   breakpoints to force a 3/4-column grid into a small drawer. */
+@media (max-width: 380px) {
+    #rm_characters_block #dw2cg-header { gap: 7px; }
+    #rm_characters_block .dw2cg-name { font-size: 17px; }
+    #rm_characters_block .dw2cg-overline { font-size: 8px; letter-spacing: .11em; }
+    #rm_characters_block #dw2cg-toggle { padding: 6px 7px !important; }
+    body.dw2cg-active.charListGrid #rm_characters_block #rm_print_characters_block {
+        gap: 14px 9px !important;
+        padding: 11px 8px 25px !important;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    #rm_characters_block #dw2cg-header *,
+    body.dw2cg-active #rm_characters_block * {
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+    }
+}
