@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 
-/* DW2 · Character Gallery | v1.0.10
+/* DW2 · Character Gallery | v1.0.11
    Scope: TT native character-list panel only.
    Preserve native DOM, delegated click handlers and source thumbnails.
    Same visual tokens as DW2 · Story Archive, without theme binding. */
@@ -933,104 +933,56 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_block {
     }
 }
 
-/* v1.0.10 · Pin silhouette rendered directly in CSS, no font/SVG.
- * A little room for each beloved character. Some hearts need no pin.
- * A 32px touch target carries a 22px translucent jewel.
- */
+/* v1.0.7 · Card-local pin: a museum inventory mark rather than a heavy
+   toolbar button. Never blocks the TT card title or bulk checkbox. */
 #rm_print_characters_block .dw2cg-pin { display: none; }
 body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin {
     position: absolute;
     z-index: 8;
-    inset-block-start: 4px;
-    inset-inline-end: 4px;
+    inset-block-start: 9px;
+    inset-inline-end: 9px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    min-height: 32px;
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    min-height: 26px;
     margin: 0 !important;
     padding: 0 !important;
-    border: none !important;
-    border-radius: 0 !important;
-    color: rgba(249,246,241,.75) !important;
-    background: transparent !important;
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
+    border: 1px solid rgba(238,226,216,.18) !important;
+    border-radius: 6px !important;
+    color: rgba(249,246,241,.67) !important;
+    background: rgba(26,24,28,.44) !important;
+    -webkit-backdrop-filter: blur(9px);
+    backdrop-filter: blur(9px);
     box-shadow: none !important;
     text-shadow: none !important;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-    transition: color .15s ease;
+    transition: color .15s ease, background .15s ease, border-color .15s ease;
 }
-body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin::before {
-    content: "";
-    position: absolute;
-    width: 22px;
-    height: 22px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    border: 1px solid rgba(238,226,216,.16);
-    border-radius: 5px;
-    background: rgba(26,24,28,.40);
-    -webkit-backdrop-filter: blur(9px);
-    backdrop-filter: blur(9px);
-    box-shadow: none;
+body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin > i {
+    font-family: 'Font Awesome 6 Free' !important;
+    font-weight: 900 !important;
+    font-style: normal !important;
+    font-size: 11px !important;
+    line-height: 1;
     pointer-events: none;
-    transition: background .15s ease, border-color .15s ease;
-}
-/* Pin head, shoulders and needle are a single painted CSS silhouette.
-   No Font Awesome font, SVG child, image resource or pseudo-text glyph. */
-body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin::after {
-    content: "" !important;
-    position: absolute !important;
-    z-index: 2 !important;
-    display: block !important;
-    visibility: visible !important;
-    top: 50% !important;
-    left: 50% !important;
-    width: 12px !important;
-    height: 15px !important;
-    min-width: 12px !important;
-    min-height: 15px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    transform: translate(-50%, -50%) rotate(-18deg) !important;
-    -webkit-transform: translate(-50%, -50%) rotate(-18deg) !important;
-    background: currentColor !important;
-    background-image: none !important;
-    opacity: 1 !important;
-    clip-path: polygon(
-        20% 0%, 80% 0%, 74% 27%, 84% 48%, 100% 67%,
-        100% 74%, 57% 74%, 53% 100%, 47% 100%,
-        43% 74%, 0% 74%, 0% 67%, 16% 48%, 26% 27%
-    ) !important;
-    -webkit-clip-path: polygon(
-        20% 0%, 80% 0%, 74% 27%, 84% 48%, 100% 67%,
-        100% 74%, 57% 74%, 53% 100%, 47% 100%,
-        43% 74%, 0% 74%, 0% 67%, 16% 48%, 26% 27%
-    ) !important;
-    pointer-events: none !important;
 }
 body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin.dw2cg-is-pinned {
     color: #ffe4e1 !important;
+    border-color: rgba(255,228,225,.45) !important;
+    background: rgba(77,55,60,.55) !important;
 }
-body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin.dw2cg-is-pinned::before {
-    border-color: rgba(255,228,225,.42);
-    background: rgba(77,55,60,.52);
-}
-body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin:is(:hover,:focus-visible)::before {
-    border-color: rgba(191,217,229,.58);
-    background: rgba(28,29,35,.68);
+body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin:is(:hover,:focus-visible) {
+    border-color: rgba(191,217,229,.58) !important;
+    background: rgba(28,29,35,.7) !important;
 }
 body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin:focus-visible {
     outline: 1px solid rgba(191,217,229,.85) !important;
-    outline-offset: -1px;
+    outline-offset: 2px;
 }
 body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select {
     border-color: rgba(238,226,216,.075) !important;

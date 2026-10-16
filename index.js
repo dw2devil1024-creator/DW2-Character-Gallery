@@ -1,5 +1,5 @@
 /*
- * DW2 · Character Gallery | v1.0.10
+ * DW2 · Character Gallery | v1.0.11
  * TT native character-list presentation only. Never clone/rebind character
  * cards: TT owns its delegated click handlers, sort/filter and bulk actions.
  */
@@ -17,7 +17,7 @@ const QUICK_ACTION_IDS = Object.freeze([
     'rm_button_create', 'character_import_button',
     'external_import_button', 'rm_button_group_chats', 'rm_buttons_container'
 ]);
-const BUILD_VERSION = '1.0.10';
+const BUILD_VERSION = '1.0.11';
 let checkedUpdate = null;
 let updateBusy = false;
 const NATIVE_ACTION_IDS = Object.freeze([
@@ -461,7 +461,7 @@ function mountSettings() {
     content.className = 'inline-drawer-content';
     const status = document.createElement('p');
     status.className = 'dw2cg-settings-note';
-    status.textContent = '已加载 · v1.0.10 · DW2 独立视觉';
+    status.textContent = '已加载 · v1.0.11 · DW2 独立视觉';
     const option = document.createElement('label');
     option.className = 'checkbox_label dw2cg-settings-option';
     const checkbox = document.createElement('input');
@@ -535,9 +535,6 @@ function sortPinnedEntities(entities) {
 function removePinButtons() {
     document.querySelectorAll('#rm_print_characters_block .dw2cg-pin').forEach(el => el.remove());
 }
-// The pin silhouette is drawn with CSS ::after, never icon fonts / SVG.
-// TT themes can hide icon children; ::before (glass) and ::after (pin)
-// are independent of the host's glyph and SVG rules.
 function addPinButtons() {
     if (!runtimeEnabled || !document.body?.classList.contains(ROOT_CLASS)) return;
     const cards = document.querySelectorAll('#rm_print_characters_block > .character_select[data-chid]');
@@ -551,6 +548,10 @@ function addPinButtons() {
             button = document.createElement('button');
             button.type = 'button';
             button.className = 'dw2cg-pin';
+            const icon = document.createElement('i');
+            icon.className = 'fa-solid fa-thumbtack';
+            icon.setAttribute('aria-hidden','true');
+            button.append(icon);
             button.addEventListener('pointerdown', event => event.stopPropagation());
             button.addEventListener('mousedown', event => event.stopPropagation());
             button.addEventListener('touchstart', event => event.stopPropagation(), { passive: true });
@@ -570,9 +571,6 @@ function addPinButtons() {
             });
             card.append(button);
         }
-        // Clear obsolete FA/SVG children on live extension refresh.
-        // CSS pseudo-elements draw the glass and pin independently.
-        if (button.firstChild) button.replaceChildren();
         const selected = pinnedAvatars.has(key);
         button.classList.toggle('dw2cg-is-pinned', selected);
         card.classList.toggle('dw2cg-is-pinned', selected);
