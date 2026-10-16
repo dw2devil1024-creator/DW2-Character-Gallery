@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 
-/* DW2 · Character Gallery | v1.0.8
+/* DW2 · Character Gallery | v1.0.9
    Scope: TT native character-list panel only.
    Preserve native DOM, delegated click handlers and source thumbnails.
    Same visual tokens as DW2 · Story Archive, without theme binding. */
@@ -933,7 +933,7 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_block {
     }
 }
 
-/* v1.0.8 · Small visual pin, comfortably tappable on iPhone and Android.
+/* v1.0.9 · Visible SVG pin and compact 22px glass mark.
  * A little room for each beloved character. Some hearts need no pin.
  * A 32px touch target carries a 22px translucent jewel; no JS changes.
  */
@@ -982,15 +982,19 @@ body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > 
     pointer-events: none;
     transition: background .15s ease, border-color .15s ease;
 }
-body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin > i {
-    position: relative;
-    z-index: 1;
-    font-family: 'Font Awesome 6 Free' !important;
-    font-weight: 900 !important;
-    font-style: normal !important;
-    font-size: 9.5px !important;
-    line-height: 1;
-    pointer-events: none;
+body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin > svg.dw2cg-pin-icon {
+    position: relative !important;
+    z-index: 2 !important;
+    display: block !important;
+    visibility: visible !important;
+    width: 12px !important;
+    height: 12px !important;
+    min-width: 12px !important;
+    min-height: 12px !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+    flex: 0 0 12px;
 }
 body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin.dw2cg-is-pinned {
     color: #ffe4e1 !important;
