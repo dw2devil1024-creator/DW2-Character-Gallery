@@ -1,5 +1,5 @@
 /*
- * DW2 · Character Gallery | v1.0.11
+ * DW2 · Character Gallery | v1.0.12
  * TT native character-list presentation only. Never clone/rebind character
  * cards: TT owns its delegated click handlers, sort/filter and bulk actions.
  */
@@ -17,7 +17,7 @@ const QUICK_ACTION_IDS = Object.freeze([
     'rm_button_create', 'character_import_button',
     'external_import_button', 'rm_button_group_chats', 'rm_buttons_container'
 ]);
-const BUILD_VERSION = '1.0.11';
+const BUILD_VERSION = '1.0.12';
 let checkedUpdate = null;
 let updateBusy = false;
 const NATIVE_ACTION_IDS = Object.freeze([
@@ -461,7 +461,7 @@ function mountSettings() {
     content.className = 'inline-drawer-content';
     const status = document.createElement('p');
     status.className = 'dw2cg-settings-note';
-    status.textContent = '已加载 · v1.0.11 · DW2 独立视觉';
+    status.textContent = '已加载 · v1.0.12 · DW2 独立视觉';
     const option = document.createElement('label');
     option.className = 'checkbox_label dw2cg-settings-option';
     const checkbox = document.createElement('input');
@@ -507,9 +507,12 @@ function avatarKey(item) {
         ? 'avatar:' + item.avatar
         : null;
 }
-function pinKeyForCard(card) {
+function pinKeyForCard(card, characterList) {
     const id = Number(card.dataset.chid);
-    const entity = globalThis.SillyTavern?.getContext?.()?.characters?.[id];
+    // Reuse the character collection across the entire page. TT getContext()
+    // may be costly with large history; 1000/page must not call it 1000 times.
+    const characters = characterList ?? globalThis.SillyTavern?.getContext?.()?.characters;
+    const entity = characters?.[id];
     // Data-chid is transient; never save it as a pin identifier.
     return avatarKey(entity);
 }
@@ -538,8 +541,11 @@ function removePinButtons() {
 function addPinButtons() {
     if (!runtimeEnabled || !document.body?.classList.contains(ROOT_CLASS)) return;
     const cards = document.querySelectorAll('#rm_print_characters_block > .character_select[data-chid]');
+    if (!cards.length) return;
+    const characterList = globalThis.SillyTavern?.getContext?.()?.characters;
+    if (!characterList) return;
     for (const card of cards) {
-        const key = pinKeyForCard(card);
+        const key = pinKeyForCard(card, characterList);
         // Character entries without a native avatar filename are not pinned
         // by unstable numeric IDs. This protects records after resort/import.
         if (!key) continue;
