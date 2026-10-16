@@ -1,6 +1,6 @@
 /* Use the TT theme's existing fonts; do not fetch Google Fonts at startup. */
 
-/* DW2 · Character Gallery | v1.0.14
+/* DW2 · Character Gallery | v1.0.15
    Scope: TT native character-list panel only.
    Preserve native DOM, delegated click handlers and source thumbnails.
    Same visual tokens as DW2 · Story Archive, without theme binding. */
@@ -610,8 +610,11 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_block {
     line-height: 1.55;
 }
 #dw2cg-settings .dw2cg-settings-heading b {
-    font: 600 15px/1.5 'Noto Serif SC','Songti SC','STSong',serif !important;
-    letter-spacing: .035em;
+    font-family: 'Noto Serif SC','Songti SC','STSong',serif !important;
+    font-size: inherit !important;
+    font-weight: 600 !important;
+    line-height: 1.45 !important;
+    letter-spacing: normal !important;
     color: var(--dw2cg-settings-ink);
 }
 #dw2cg-settings .dw2cg-settings-credit {
@@ -887,7 +890,7 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_block {
 /* DW2-family extension settings typography, plus native update controls. */
 #extensions_settings2 #dw2cg-settings .inline-drawer-header .dw2cg-settings-heading > b,
 #extensions_settings #dw2cg-settings .inline-drawer-header .dw2cg-settings-heading > b {
-    font-size: 15px !important;
+    font-size: inherit !important;
     line-height: 1.45 !important;
     font-weight: 600 !important;
 }

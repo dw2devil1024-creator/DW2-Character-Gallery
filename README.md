@@ -176,3 +176,9 @@ https://github.com/dw2devil1024-creator/DW2-Character-Gallery
 - 检查重点：首次进入画廊、切换原生视图、图钉与仅看置顶、多页排序、重新启动后书架首页加载速度。
 
 此项针对明确的启动浪费进行修复；实际速度变化需用 iPhone/安卓冷启动对比测试确认。
+
+## v1.0.15 · DW2 扩展标题字号统一
+
+- 参照 Preset Console、Story Archive、Little Things、Resource Library 与 Interface Organizer 的设置抽屉，把画廊扩展标题改为继承 TT 原生标题字号，不再强制 15px；保留统一的 Noto Serif SC 字体、600 字重和副署名。
+- 顺手修正扩展页「已加载」提示残留旧版本号的问题，改为直接读取构建版本。
+- 仅调整扩展设置文案与样式，不更动画廊冷启动优化、26px 图钉、置顶先后排序或分页桥。
