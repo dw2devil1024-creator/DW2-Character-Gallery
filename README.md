@@ -136,3 +136,10 @@ https://github.com/dw2devil1024-creator/DW2-Character-Gallery
 - 保持 22px 可见玻璃底框与 32px 实际点按范围，置顶与排序逻辑均不改。
 - 支持将当前页面已存在的旧图钉 DOM 轻量升级为 SVG 图标。
 - CSS 源码顶部/图钉区域保留设计注释；公开源码中的情话公开可见，私密日记不放在公共仓库中。
+
+## v1.0.10 空白图钉再次修复
+
+- iPhone 真机发现 v1.0.9 仍只有空玻璃方块：旧版 Font Awesome 和 SVG 图钉均未显示。
+- **彻底去除图标字体与 SVG DOM**：图钉形状直接使用 CSS `::after` + `clip-path: polygon(...)` 绘制，与玻璃底框 `::before` 分开，不依赖 TT 主题的图标样式。
+- 保持 22px 视觉玻璃底框、32px 触控区；置顶状态、排序和本地存储逻辑保持原样。
+- 旧按钮的图标子节点会自动清理。真机是否解决仍以 iPhone/Android 测试为准。

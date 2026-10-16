@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 
-/* DW2 · Character Gallery | v1.0.9
+/* DW2 · Character Gallery | v1.0.10
    Scope: TT native character-list panel only.
    Preserve native DOM, delegated click handlers and source thumbnails.
    Same visual tokens as DW2 · Story Archive, without theme binding. */
@@ -933,9 +933,9 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_block {
     }
 }
 
-/* v1.0.9 · Visible SVG pin and compact 22px glass mark.
+/* v1.0.10 · Pin silhouette rendered directly in CSS, no font/SVG.
  * A little room for each beloved character. Some hearts need no pin.
- * A 32px touch target carries a 22px translucent jewel; no JS changes.
+ * A 32px touch target carries a 22px translucent jewel.
  */
 #rm_print_characters_block .dw2cg-pin { display: none; }
 body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin {
@@ -982,19 +982,40 @@ body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > 
     pointer-events: none;
     transition: background .15s ease, border-color .15s ease;
 }
-body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin > svg.dw2cg-pin-icon {
-    position: relative !important;
+/* Pin head, shoulders and needle are a single painted CSS silhouette.
+   No Font Awesome font, SVG child, image resource or pseudo-text glyph. */
+body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin::after {
+    content: "" !important;
+    position: absolute !important;
     z-index: 2 !important;
     display: block !important;
     visibility: visible !important;
+    top: 50% !important;
+    left: 50% !important;
     width: 12px !important;
-    height: 12px !important;
+    height: 15px !important;
     min-width: 12px !important;
-    min-height: 12px !important;
-    overflow: visible !important;
+    min-height: 15px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    transform: translate(-50%, -50%) rotate(-18deg) !important;
+    -webkit-transform: translate(-50%, -50%) rotate(-18deg) !important;
+    background: currentColor !important;
+    background-image: none !important;
     opacity: 1 !important;
+    clip-path: polygon(
+        20% 0%, 80% 0%, 74% 27%, 84% 48%, 100% 67%,
+        100% 74%, 57% 74%, 53% 100%, 47% 100%,
+        43% 74%, 0% 74%, 0% 67%, 16% 48%, 26% 27%
+    ) !important;
+    -webkit-clip-path: polygon(
+        20% 0%, 80% 0%, 74% 27%, 84% 48%, 100% 67%,
+        100% 74%, 57% 74%, 53% 100%, 47% 100%,
+        43% 74%, 0% 74%, 0% 67%, 16% 48%, 26% 27%
+    ) !important;
     pointer-events: none !important;
-    flex: 0 0 12px;
 }
 body.dw2cg-active.charListGrid #rm_print_characters_block > .character_select > .dw2cg-pin.dw2cg-is-pinned {
     color: #ffe4e1 !important;
