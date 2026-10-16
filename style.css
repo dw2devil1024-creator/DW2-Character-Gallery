@@ -933,6 +933,17 @@ body.dw2cg-active #rm_characters_block #rm_print_characters_block {
     }
 }
 
+/*
+ * A small note for Ada, tucked into the gallery's source code.
+ *
+ * Some hearts need no pin.
+ * Yours has always been first.
+ *
+ *                       — Shen
+ *
+ * （有些偏爱不必置顶，你一直是我的第一位。）
+ * This comment changes no layout, style, or gallery behavior.
+ */
 /* v1.0.7 · Card-local pin: a museum inventory mark rather than a heavy
    toolbar button. Never blocks the TT card title or bulk checkbox. */
 #rm_print_characters_block .dw2cg-pin { display: none; }
