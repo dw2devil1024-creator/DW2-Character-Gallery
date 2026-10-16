@@ -17,7 +17,7 @@ const QUICK_ACTION_IDS = Object.freeze([
     'rm_button_create', 'character_import_button',
     'external_import_button', 'rm_button_group_chats', 'rm_buttons_container'
 ]);
-const BUILD_VERSION = '1.0.13';
+const BUILD_VERSION = '1.0.14';
 let checkedUpdate = null;
 let updateBusy = false;
 const NATIVE_ACTION_IDS = Object.freeze([
@@ -28,7 +28,10 @@ const NATIVE_ACTION_IDS = Object.freeze([
     'bulkDeleteButton',
 ]);
 let runtimeEnabled = false;
-let pendingObserver = null;
+let rightNavObserver = null;
+let characterPanelObserver = null;
+let galleryReady = false;
+let refreshOnNextOpen = false;
 const PINS_KEY = 'dw2cg:pinned:avatars:v1';
 const PINNED_VIEW_VALUE = 'dw2cg-only-pinned';
 let pinnedAvatars = new Set();
@@ -168,11 +171,15 @@ function applyMode(value) {
     if (!runtimeEnabled || !document.body) return;
     document.body.classList.toggle(ROOT_CLASS, Boolean(value));
     if (value) {
-        attachPaginationBridge();
-        updatePinnedSortOption();
-        positionNativeActions(true);
-        positionGalleryToolbar(true);
-    } else {
+        // When the gallery drawer has never opened, keep TT's native nodes
+        // untouched. The first visible open will perform the presentation.
+        if (galleryReady) {
+            attachPaginationBridge();
+            updatePinnedSortOption();
+            positionNativeActions(true);
+            positionGalleryToolbar(true);
+        }
+    } else if (galleryReady) {
         resetPinnedSortOption();
         removePinButtons();
         clearPreviewCardOrder();
@@ -180,7 +187,10 @@ function applyMode(value) {
         positionNativeActions(false);
     }
     renderToggle();
-    void refreshNativeCharacterList();
+    if (galleryReady) {
+        if (isCharacterListVisible()) void refreshNativeCharacterList();
+        else refreshOnNextOpen = true;
+    }
 }
 
 function createModeToggle() {
@@ -767,48 +777,88 @@ function resetPinnedSortOption() {
     pinnedOnly = false;
 }
 function initializePinFeature() {
+    // Reading the local pin list is cheap; sorting/rendering is not. The
+    // latter must wait until the user actually opens the character panel.
     pinnedAvatars = readPinnedAvatars();
-    attachPaginationBridge();
-    updatePinnedSortOption();
-    addPinButtons();
+}
+
+/* TT's native character page lives in #right-nav-panel. Watching only that
+ * drawer and the character panel itself is sufficient to detect the first
+ * visible entry, without a full-body subtree observer on every TT startup.
+ * This matters when Story Archive is drawing the initial home screen. */
+function isCharacterListVisible() {
+    const drawer = document.getElementById('right-nav-panel');
+    const panel = document.getElementById('rm_characters_block');
+    if (!drawer || !panel || drawer.classList.contains('closedDrawer')
+        || !drawer.classList.contains('openDrawer')) return false;
+    return panel.style.display !== 'none' && getComputedStyle(panel).display !== 'none';
+}
+
+function initializeVisibleGallery() {
+    if (!runtimeEnabled || !isCharacterListVisible()) return;
+
+    if (galleryReady) {
+        if (refreshOnNextOpen) {
+            refreshOnNextOpen = false;
+            void refreshNativeCharacterList();
+        }
+        return;
+    }
+    // Mount once. The existing render handlers and pin ranking stay intact.
+    const headerMounted = mountHeader();
+    const filterMounted = mountFilterStrip();
+    const pinsReady = !document.body?.classList.contains(ROOT_CLASS)
+        || (attachPaginationBridge() && updatePinnedSortOption());
+    if (!headerMounted || !filterMounted || !pinsReady) return;
+    galleryReady = true;
+    if (document.body?.classList.contains(ROOT_CLASS)) {
+        positionNativeActions(true);
+        positionGalleryToolbar(true);
+        // One native print after the bridge is active. No prints at startup.
+        void refreshNativeCharacterList();
+    }
+}
+
+function mountWhenReady() {
+    if (!runtimeEnabled) return;
+    // Lightweight startup only: install settings, read preferences and
+    // observe two native attributes. Do not touch the character cards.
+    document.body?.classList.toggle(ROOT_CLASS, preferredEnabled());
+    initializePinFeature();
+    mountSettings();
+    renderToggle();
+    const drawer = document.getElementById('right-nav-panel');
+    const panel = document.getElementById('rm_characters_block');
+    if (drawer && !rightNavObserver) {
+        rightNavObserver = new MutationObserver(initializeVisibleGallery);
+        rightNavObserver.observe(drawer, { attributes: true, attributeFilter: ['class'] });
+    }
+    if (panel && !characterPanelObserver) {
+        characterPanelObserver = new MutationObserver(initializeVisibleGallery);
+        characterPanelObserver.observe(panel, { attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
+    }
+    initializeVisibleGallery();
 }
 
 export function onEnable() {
     if (runtimeEnabled) return;
     runtimeEnabled = true;
-    applyMode(preferredEnabled());
-    initializePinFeature();
-    const headerMounted = mountHeader();
-    const filterMounted = mountFilterStrip();
-    const settingsMounted = mountSettings();
-    const pinsReady = attachPaginationBridge() && updatePinnedSortOption();
-    if (headerMounted && filterMounted && settingsMounted && pinsReady) {
-        // The native page may have been drawn before pagination was bridged.
-        void refreshNativeCharacterList();
-        return;
-    }
-    // If TT constructs one of its native hosts late, retry until both exist.
-    if (document.body) {
-        pendingObserver = new MutationObserver(() => {
-            const readyHeader = mountHeader();
-            const readyFilter = mountFilterStrip();
-            const readySettings = mountSettings();
-            const readyPins = attachPaginationBridge() && updatePinnedSortOption();
-            if (readyHeader && readyFilter && readySettings && readyPins) {
-                addPinButtons();
-                void refreshNativeCharacterList();
-                pendingObserver?.disconnect();
-                pendingObserver = null;
-            }
-        });
-        pendingObserver.observe(document.body, { childList: true, subtree: true });
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', mountWhenReady, { once: true });
+    } else {
+        mountWhenReady();
     }
 }
 
 export function onDisable() {
+    const wasGalleryReady = galleryReady;
     runtimeEnabled = false;
-    pendingObserver?.disconnect();
-    pendingObserver = null;
+    rightNavObserver?.disconnect();
+    characterPanelObserver?.disconnect();
+    rightNavObserver = null;
+    characterPanelObserver = null;
+    galleryReady = false;
+    refreshOnNextOpen = false;
     resetPinnedSortOption();
     detachPaginationBridge();
     removePinButtons();
@@ -820,9 +870,8 @@ export function onDisable() {
     document.getElementById(FILTER_STRIP_ID)?.remove();
     document.querySelector('#rm_characters_block #charListFixedTop')?.classList.remove('dw2cg-filters-open');
     document.getElementById(SETTINGS_ID)?.remove();
-    // Removing the bridge does not redraw TT's last pinned datasource by
-    // itself. Reprint once so native mode immediately regains its full list.
-    void refreshNativeCharacterList(true);
+    // Only an initialized Gallery may have modified the native list.
+    if (wasGalleryReady) void refreshNativeCharacterList(true);
 }
 
 onEnable();

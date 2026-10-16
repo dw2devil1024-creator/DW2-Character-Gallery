@@ -1,6 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
+/* Use the TT theme's existing fonts; do not fetch Google Fonts at startup. */
 
-/* DW2 · Character Gallery | v1.0.13
+/* DW2 · Character Gallery | v1.0.14
    Scope: TT native character-list panel only.
    Preserve native DOM, delegated click handlers and source thumbnails.
    Same visual tokens as DW2 · Story Archive, without theme binding. */
