@@ -1,5 +1,5 @@
 /*
- * DW2 · Character Gallery | v1.0.12
+ * DW2 · Character Gallery | v1.0.13
  * TT native character-list presentation only. Never clone/rebind character
  * cards: TT owns its delegated click handlers, sort/filter and bulk actions.
  */
@@ -17,7 +17,7 @@ const QUICK_ACTION_IDS = Object.freeze([
     'rm_button_create', 'character_import_button',
     'external_import_button', 'rm_button_group_chats', 'rm_buttons_container'
 ]);
-const BUILD_VERSION = '1.0.12';
+const BUILD_VERSION = '1.0.13';
 let checkedUpdate = null;
 let updateBusy = false;
 const NATIVE_ACTION_IDS = Object.freeze([
@@ -38,6 +38,8 @@ let paginationOriginal = null;
 let paginationBridge = null;
 let sortSelect = null;
 let pageRefreshPromise = null;
+let latestNativeEntities = null;
+let latestNativePageSize = 0;
 
 
 function preferredEnabled() {
@@ -173,6 +175,7 @@ function applyMode(value) {
     } else {
         resetPinnedSortOption();
         removePinButtons();
+        clearPreviewCardOrder();
         positionGalleryToolbar(false);
         positionNativeActions(false);
     }
@@ -461,7 +464,7 @@ function mountSettings() {
     content.className = 'inline-drawer-content';
     const status = document.createElement('p');
     status.className = 'dw2cg-settings-note';
-    status.textContent = '已加载 · v1.0.12 · DW2 独立视觉';
+    status.textContent = '已加载 · v1.0.13 · DW2 独立视觉';
     const option = document.createElement('label');
     option.className = 'checkbox_label dw2cg-settings-option';
     const checkbox = document.createElement('input');
@@ -516,24 +519,83 @@ function pinKeyForCard(card, characterList) {
     // Data-chid is transient; never save it as a pin identifier.
     return avatarKey(entity);
 }
+function getPinRanks() {
+    // Set retains the original user click order and survives serialization
+    // as an array in dw2cg:pinned:avatars:v1. Earliest pin ranks first.
+    return new Map([...pinnedAvatars].map((key, index) => [key, index]));
+}
 function sortPinnedEntities(entities) {
     // TT can temporarily switch its own selector to Search when a query
     // starts. Do not keep a hidden custom-only-pins state after that.
     if (pinnedOnly && document.getElementById('character_sort_order')?.value !== PINNED_VIEW_VALUE) {
         pinnedOnly = false;
     }
+    const ranks = getPinRanks();
     if (pinnedOnly) {
-        return entities.filter(entity => entity?.type === 'character' && pinnedAvatars.has(avatarKey(entity.item)));
+        return entities
+            .filter(entity => entity?.type === 'character' && ranks.has(avatarKey(entity.item)))
+            .sort((a,b) => ranks.get(avatarKey(a.item)) - ranks.get(avatarKey(b.item)));
     }
-    if (!pinnedAvatars.size) return entities;
+    if (!ranks.size) return entities;
     const folders = [], pinned = [], others = [];
     for (const entity of entities) {
-        // Preserve TT's own folder order and folder navigation.
+        // Preserve TT's native folder priority and non-pinned sorting.
         if (entity?.type === 'tag') folders.push(entity);
-        else if (entity?.type === 'character' && pinnedAvatars.has(avatarKey(entity.item))) pinned.push(entity);
+        else if (entity?.type === 'character' && ranks.has(avatarKey(entity.item))) pinned.push(entity);
         else others.push(entity);
     }
+    pinned.sort((a,b) => ranks.get(avatarKey(a.item)) - ranks.get(avatarKey(b.item)));
     return [...folders, ...pinned, ...others];
+}
+function clearPreviewCardOrder() {
+    document.querySelectorAll('#rm_print_characters_block > .character_select[style*="order"]')
+        .forEach(card => card.style.removeProperty('order'));
+}
+/* Fast path: 1000/page often contains the entire filtered list. A pin tap
+ * need not ask TT to rebuild hundreds of cards, their tag filters and the
+ * pagination bar just to move one existing DOM card. CSS Grid order changes
+ * only visual card placement; TT still owns every original card and handler.
+ *
+ * For multiple pages, folders/groups, or the pinned-only filter, use the
+ * native refresh instead to preserve pagination and filter correctness. */
+function reorderVisibleSinglePage() {
+    if (pinnedOnly || pageRefreshPromise || !latestNativeEntities?.length) return false;
+    if (!latestNativePageSize || latestNativeEntities.length > latestNativePageSize) return false;
+    const list = document.getElementById('rm_print_characters_block');
+    if (!list || !document.body?.classList.contains(ROOT_CLASS)) return false;
+    const children = Array.from(list.children);
+    if (!children.length || !children.every(node =>
+        node.classList?.contains('character_select') && node.hasAttribute('data-chid'))) return false;
+    const characters = globalThis.SillyTavern?.getContext?.()?.characters;
+    if (!characters) return false;
+    const nativeRank = new Map();
+    latestNativeEntities.forEach((entity, index) => {
+        if (entity?.type === 'character') nativeRank.set(Number(entity.id), index);
+    });
+    const pinRank = getPinRanks();
+    const cards = children.map((card, index) => {
+        const characterId = Number(card.dataset.chid);
+        const key = pinKeyForCard(card, characters);
+        return {
+            card,
+            index,
+            originalOrder: nativeRank.get(characterId) ?? index,
+            pinnedOrder: pinRank.get(key),
+        };
+    });
+    if (cards.some(entry => !Number.isFinite(entry.originalOrder))) return false;
+    cards.sort((a,b) => {
+        const ap = a.pinnedOrder !== undefined;
+        const bp = b.pinnedOrder !== undefined;
+        if (ap !== bp) return ap ? -1 : 1;
+        if (ap) return a.pinnedOrder - b.pinnedOrder;
+        return a.originalOrder - b.originalOrder || a.index - b.index;
+    });
+    // order is only visible in Gallery grid mode. Clear it on mode changes.
+    cards.forEach((entry, index) => {
+        if (entry.card.style.order !== String(index)) entry.card.style.order = String(index);
+    });
+    return true;
 }
 function removePinButtons() {
     document.querySelectorAll('#rm_print_characters_block .dw2cg-pin').forEach(el => el.remove());
@@ -573,7 +635,11 @@ function addPinButtons() {
                 button.classList.toggle('dw2cg-is-pinned', pinnedAvatars.has(currentKey));
                 card.classList.toggle('dw2cg-is-pinned', pinnedAvatars.has(currentKey));
                 button.setAttribute('aria-pressed', String(pinnedAvatars.has(currentKey)));
-                await refreshNativeCharacterList();
+                button.setAttribute('aria-label', pinnedAvatars.has(currentKey) ? '取消角色置顶' : '置顶角色');
+                button.title = pinnedAvatars.has(currentKey) ? '取消置顶' : '置顶角色';
+                // In single-page galleries move the existing cards without
+                // TT's full printCharacters(true) rebuild or scroll reset.
+                if (!reorderVisibleSinglePage()) await refreshNativeCharacterList();
             });
             card.append(button);
         }
@@ -619,6 +685,8 @@ function attachPaginationBridge() {
             && this?.[0]?.id === 'rm_print_characters_pagination'
             && args[0] && typeof args[0] === 'object'
             && Array.isArray(args[0].dataSource)) {
+            latestNativeEntities = args[0].dataSource;
+            latestNativePageSize = Number(args[0].pageSize) || 0;
             const options = { ...args[0] };
             options.dataSource = sortPinnedEntities(options.dataSource);
             const callback = options.callback;
@@ -645,6 +713,8 @@ function detachPaginationBridge() {
     if ($?.fn && $.fn.pagination === paginationBridge) $.fn.pagination = paginationOriginal;
     paginationBridge = null;
     paginationOriginal = null;
+    latestNativeEntities = null;
+    latestNativePageSize = 0;
 }
 function updatePinnedSortOption() {
     const select = document.getElementById('character_sort_order');
@@ -742,6 +812,7 @@ export function onDisable() {
     resetPinnedSortOption();
     detachPaginationBridge();
     removePinButtons();
+    clearPreviewCardOrder();
     positionGalleryToolbar(false);
     positionNativeActions(false);
     document.body?.classList.remove(ROOT_CLASS);
